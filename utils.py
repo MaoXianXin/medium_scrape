@@ -1,5 +1,6 @@
 from openai import OpenAI
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
+import os
 
 class OpenAIClient:
     def __init__(
@@ -87,3 +88,98 @@ class KnowledgeFrameworkGenerator:
             system_prompt=system_prompt
         )
         return response.content
+
+class ArticleFilter:
+    def __init__(self, ai_client: OpenAIClient):
+        """
+        初始化文章筛选器
+        
+        Args:
+            ai_client: OpenAI客户端实例
+        """
+        self.ai_client = ai_client
+        
+    def calculate_relevance(
+        self,
+        knowledge_framework: str,
+        search_topic: str,
+        system_prompt: Optional[str] = None
+    ) -> float:
+        """
+        计算知识框架与搜索主题的相关度分数
+        
+        Args:
+            knowledge_framework: 知识框架内容
+            search_topic: 搜索主题
+            system_prompt: 可选的系统提示词
+            
+        Returns:
+            float: 相关度分数(0-1)
+        """
+        messages = [
+            {
+                "role": "user",
+                "content": f"请分析以下知识框架与搜索主题的相关度，返回一个0到1之间的分数。分数越高表示相关度越高。\n\n"
+                          f"知识框架：\n{knowledge_framework}\n\n"
+                          f"搜索主题：\n{search_topic}\n\n"
+                          f"请只返回分数，例如：0.75"
+            }
+        ]
+        
+        response = self.ai_client.get_completion(
+            messages=messages,
+            system_prompt=system_prompt
+        )
+        return float(response.content)
+
+    def filter_articles(
+        self,
+        summaries_dir: str,
+        search_topic: str,
+        threshold: float = 0.5,
+        system_prompt: Optional[str] = None
+    ) -> List[Dict[str, Union[str, float]]]:
+        """
+        根据搜索主题筛选相关文章
+        
+        Args:
+            summaries_dir: 知识框架文件目录
+            search_topic: 搜索主题
+            threshold: 相关度阈值
+            system_prompt: 可选的系统提示词
+            
+        Returns:
+            List[Dict[str, Union[str, float]]]: 筛选后的文章列表，每个字典包含：
+                - filename (str): 文件名
+                - relevance_score (float): 相关度分数
+                - framework (str): 知识框架内容
+        """
+        filtered_articles = []
+        
+        # 遍历summaries目录下的所有txt文件
+        for filename in os.listdir(summaries_dir):
+            if filename.endswith('.txt'):
+                file_path = os.path.join(summaries_dir, filename)
+                
+                # 读取知识框架内容
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    knowledge_framework = f.read()
+                
+                # 计算相关度分数
+                relevance_score = self.calculate_relevance(
+                    knowledge_framework=knowledge_framework,
+                    search_topic=search_topic,
+                    system_prompt=system_prompt
+                )
+                
+                # 如果分数超过阈值，添加到结果列表
+                if relevance_score >= threshold:
+                    filtered_articles.append({
+                        'filename': filename,
+                        'relevance_score': relevance_score,
+                        'framework': knowledge_framework
+                    })
+        
+        # 按相关度分数降序排序
+        filtered_articles.sort(key=lambda x: x['relevance_score'], reverse=True)
+        return filtered_articles
