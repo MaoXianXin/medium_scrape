@@ -28,6 +28,13 @@ def main():
     for filename in os.listdir(articles_dir):
         if filename.endswith(".txt"):
             article_path = os.path.join(articles_dir, filename)
+            output_path = os.path.join("summaries", filename)
+            
+            # 检查是否已经存在对应的知识框架文件
+            if os.path.exists(output_path):
+                print(f"知识框架已存在，跳过生成：{output_path}")
+                continue
+                
             article_content = read_file(article_path)
             
             # 生成知识框架
@@ -37,8 +44,7 @@ def main():
                 system_prompt="你是一个专业的知识框架生成专家"
             )
             
-            # 保存结果到summaries目录，使用原始文件名
-            output_path = os.path.join("summaries", filename)
+            # 保存结果到summaries目录
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(knowledge_framework)
             
