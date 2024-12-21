@@ -2,6 +2,14 @@ from openai import OpenAI
 from typing import List, Dict, Optional, Union
 import os
 
+"""
+utils.py 包含OpenAI客户端、知识框架生成器和文章筛选器的实现。
+提示词共同工作，指导LLM模型完成知识框架生成和相关度计算等任务:
+OpenAIClient类的get_completion函数中的system_prompt
+KnowledgeFrameworkGenerator类的generate函数中的system_prompt跟messages
+ArticleFilter类的calculate_relevance函数中的system_prompt跟messages
+"""
+
 class OpenAIClient:
     def __init__(
         self,

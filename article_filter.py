@@ -1,5 +1,13 @@
 from utils import OpenAIClient, ArticleFilter
 
+"""
+article_filter.py 是文章筛选器的实现。
+它使用OpenAI API来评估文章与给定主题的相关度，并返回筛选后的文章列表。
+search_topic的写法
+threshold的阈值
+system_prompt的提示词
+"""
+
 def main():
     # 初始化OpenAI客户端
     ai_client = OpenAIClient(

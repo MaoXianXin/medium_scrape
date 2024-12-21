@@ -1,6 +1,13 @@
 import os
 from utils import OpenAIClient, KnowledgeFrameworkGenerator
 
+"""
+knowledge_framework_generator.py 是知识框架生成器的实现。
+它使用OpenAI API来生成知识框架，并保存到指定的目录中。
+Prompt知识框架.txt
+system_prompt
+"""
+
 def read_file(file_path: str) -> str:
     """读取文件内容"""
     with open(file_path, 'r', encoding='utf-8') as f:
