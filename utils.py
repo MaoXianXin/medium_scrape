@@ -114,7 +114,7 @@ class ArticleFilter:
         system_prompt: Optional[str] = None
     ) -> float:
         """
-        计算知识框架与搜索主题的相关度分数
+        计算知识框架图与搜索主题的相关度分数
         
         Args:
             knowledge_framework: 知识框架内容
@@ -124,11 +124,14 @@ class ArticleFilter:
         Returns:
             float: 相关度分数(0-1)
         """
+        # 提取第一部分：知识框架图
+        framework_part = knowledge_framework.split("第二部分：核心概念定义")[0].strip()
+
         messages = [
             {
                 "role": "user",
-                "content": f"请分析以下知识框架与搜索主题的相关度，返回一个0到1之间的分数。分数越高表示相关度越高。\n\n"
-                          f"知识框架：\n{knowledge_framework}\n\n"
+                "content": f"请分析以下知识框架图与搜索主题的相关度，返回一个0到1之间的分数。分数越高表示相关度越高。\n\n"
+                          f"知识框架图：\n{framework_part}\n\n"
                           f"搜索主题：\n{search_topic}\n\n"
                           f"请只返回分数，例如：0.75"
             }
