@@ -26,8 +26,9 @@ def main():
             print(url)
 
         # 保存结果
-        save_urls_to_file(article_urls)
-        print("\n文章链接已保存到 article_urls.txt")
+        skipped_count = save_urls_to_file(article_urls)
+        print(f"\n找到 {len(article_urls)} 篇文章，其中 {skipped_count} 篇已存在")
+        print(f"新文章链接已保存到 article_urls.txt")
 
     finally:
         driver.quit()

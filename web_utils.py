@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+import os
 
 def init_driver(chrome_driver_path, chrome_binary_path):
     """初始化并返回配置好的Chrome WebDriver"""
@@ -12,9 +13,29 @@ def init_driver(chrome_driver_path, chrome_binary_path):
 
 def save_urls_to_file(urls, filename='article_urls.txt'):
     """将URL列表保存到文件"""
+    # 获取已存在的文章
+    existing_articles = set()
+    try:
+        for file in os.listdir('articles'):
+            name, ext = os.path.splitext(file)
+            if ext.lower() == '.txt':
+                existing_articles.add(name)
+    except FileNotFoundError:
+        pass
+
+    # 过滤出新的URL
+    new_urls = []
+    for url in urls:
+        article_id = url.split('/')[-1]  # 获取URL最后一部分作为文章ID
+        if article_id not in existing_articles:
+            new_urls.append(url)
+
+    # 保存新的URL
     with open(filename, 'w', encoding='utf-8') as f:
-        for url in urls:
+        for url in new_urls:
             f.write(url + '\n')
+    
+    return len(urls) - len(new_urls)  # 返回跳过的URL数量
 
 def extract_article_urls(driver, selector="a[rel='noopener follow']"):
     """提取页面中的文章URL"""
