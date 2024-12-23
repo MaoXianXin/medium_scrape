@@ -108,8 +108,6 @@ def get_article_content(driver, url):
             'content': '\n\n'.join(content)
         }
     except Exception as e:
-        print(f"获取文章内容时出错: {url}")
-        print(f"错误信息: {str(e)}")
         raise  # 让调用者处理异常
 
 def save_article(article_data, article_id):
