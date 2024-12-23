@@ -91,21 +91,19 @@ def get_article_content(driver, url):
     """获取文章内容"""
     try:
         driver.get(url)
-        # 等待文章主体加载完成
-        article = WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.TAG_NAME, "article"))
-        )
+        # 等待页面加载（最多等待20秒）
+        wait = WebDriverWait(driver, 20)
         
-        # 获取文章标题
-        title = driver.find_element(By.TAG_NAME, "h1").text
+        # 等待并获取文章标题
+        title = wait.until(EC.presence_of_element_located((By.TAG_NAME, "h1"))).text
         
-        # 获取所有段落内容
-        paragraphs = article.find_elements(By.TAG_NAME, "p")
-        content = [p.text for p in paragraphs if p.text.strip()]
+        # 获取文章内容
+        article_content = wait.until(EC.presence_of_element_located((By.TAG_NAME, "article"))).text
         
         return {
             'title': title,
-            'content': '\n\n'.join(content)
+            'url': url,
+            'content': article_content
         }
     except Exception as e:
         raise  # 让调用者处理异常
@@ -119,6 +117,8 @@ def save_article(article_data, article_id):
     try:
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(f"标题：{article_data['title']}\n\n")
+            f.write(f"URL：{article_data['url']}\n\n")  # 添加URL
+            f.write("正文：\n")  # 添加正文标识
             f.write(article_data['content'])
         return True
     except Exception as e:
