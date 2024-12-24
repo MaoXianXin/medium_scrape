@@ -41,21 +41,31 @@ def main():
             if os.path.exists(output_path):
                 print(f"知识框架已存在，跳过生成：{output_path}")
                 continue
+            
+            try:
+                article_content = read_file(article_path)
                 
-            article_content = read_file(article_path)
-            
-            # 生成知识框架
-            knowledge_framework = framework_generator.generate(
-                article_content,
-                framework_prompt,
-                system_prompt="你是一个专业的知识框架生成专家"
-            )
-            
-            # 保存结果到summaries目录
-            with open(output_path, 'w', encoding='utf-8') as f:
-                f.write(knowledge_framework)
-            
-            print(f"已生成知识框架：{output_path}")
+                # 生成知识框架
+                knowledge_framework = framework_generator.generate(
+                    article_content,
+                    framework_prompt,
+                    system_prompt="你是一个专业的知识框架生成专家"
+                )
+                
+                # 验证知识框架不为空
+                if not knowledge_framework or not knowledge_framework.strip():
+                    print(f"警告：{filename} 生成的知识框架为空，跳过保存")
+                    continue
+                
+                # 保存结果到summaries目录
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    f.write(knowledge_framework)
+                
+                print(f"已生成知识框架：{output_path}")
+                
+            except Exception as e:
+                print(f"处理文件 {filename} 时发生错误: {str(e)}")
+                continue
 
 if __name__ == "__main__":
     main()
