@@ -8,24 +8,17 @@ threshold的阈值
 system_prompt的提示词
 """
 
-def main():
-    # 初始化OpenAI客户端
-    ai_client = OpenAIClient(
-        api_key="sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4",
-        base_url="https://www.gptapi.us/v1",
-        model_name="gpt-4o-mini"
-    )
+class ArticleFilterService:
+    def __init__(self, api_key, base_url="https://www.gptapi.us/v1", model_name="gpt-4o-mini"):
+        self.ai_client = OpenAIClient(
+            api_key=api_key,
+            base_url=base_url,
+            model_name=model_name
+        )
+        self.article_filter = ArticleFilter(self.ai_client)
     
-    # 创建文章筛选器实例
-    article_filter = ArticleFilter(ai_client)
-    
-    # 定义搜索参数
-    summaries_dir = "./summaries"  # 知识框架文件目录
-    search_topic = "注意力机制"  # 搜索主题
-    threshold = 0.6  # 相关度阈值
-    
-    # 可选的系统提示词
-    system_prompt = """你是一个专业的文献相关度分析专家。你的任务是评估知识框架图与搜索主题的相关度。
+    def get_default_system_prompt(self):
+        return """你是一个专业的文献相关度分析专家。你的任务是评估知识框架图与搜索主题的相关度。
 
 评分标准：
 1. 主题相关性(40分)：
@@ -42,24 +35,49 @@ def main():
 
 请根据以上标准进行评分，将总分除以100得出最终的相关度分数(0-1之间)。
 只返回最终的相关度分数，例如：0.75"""
-    
-    try:
-        # 执行文章筛选
-        filtered_articles = article_filter.filter_articles(
+
+    def filter_articles(self, summaries_dir, search_topic, threshold=0.6, system_prompt=None):
+        """
+        筛选文章的主要方法
+        
+        Args:
+            summaries_dir (str): 知识框架文件目录
+            search_topic (str): 搜索主题
+            threshold (float): 相关度阈值，默认0.6
+            system_prompt (str, optional): 自定义系统提示词
+            
+        Returns:
+            list: 筛选后的文章列表
+        """
+        if system_prompt is None:
+            system_prompt = self.get_default_system_prompt()
+            
+        return self.article_filter.filter_articles(
             summaries_dir=summaries_dir,
             search_topic=search_topic,
             threshold=threshold,
             system_prompt=system_prompt
         )
+
+def main():
+    # 示例用法
+    service = ArticleFilterService(
+        api_key="sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4"
+    )
+    
+    try:
+        filtered_articles = service.filter_articles(
+            summaries_dir="./summaries",
+            search_topic="注意力机制"
+        )
         
-        # 打印筛选结果
         print(f"\n找到 {len(filtered_articles)} 篇相关文章：\n")
         
         for idx, article in enumerate(filtered_articles, 1):
             print(f"=== 文章 {idx} ===")
             print(f"文件名: {article['filename']}")
             print(f"相关度: {article['relevance_score']:.2f}")
-            print(f"知识框架预览: {article['framework'][:200]}...")  # 只显示前200个字符
+            print(f"知识框架预览: {article['framework'][:200]}...")
             print("-" * 50)
             
     except Exception as e:
