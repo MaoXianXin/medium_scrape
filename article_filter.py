@@ -68,7 +68,8 @@ def main():
     try:
         filtered_articles = service.filter_articles(
             summaries_dir="./summaries",
-            search_topic="注意力机制"
+            search_topic="注意力机制",
+            threshold=0.8,
         )
         
         print(f"\n找到 {len(filtered_articles)} 篇相关文章：\n")
