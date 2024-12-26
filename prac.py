@@ -58,35 +58,60 @@ def load_summaries(summaries_dir: str) -> tuple[list[str], list[str]]:
                 file_names.append(file_name)
     return documents, file_names
 
-def search_similar_articles(query: str, top_k: int = 3) -> List[tuple[str, float]]:
-    """根据查询文本搜索相似的文章"""
+def search_similar_articles(query: str, top_k: int = 3, batch_size: int = 1000) -> List[tuple[str, float]]:
+    """根据查询文本搜索相似的文章
+    
+    Args:
+        query: 查询文本
+        top_k: 返回的相似文章数量
+        batch_size: embedding处理时的批量大小
+    """
     # 初始化 Chroma 客户端和 embedding 函数
     client = chromadb.PersistentClient(path="./chroma_db")
     custom_ef = CustomOpenAIEmbeddingFunction(
         api_key="sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4",
         base_url="https://www.gptapi.us/v1",
-        model_name="text-embedding-3-small"
+        model_name="text-embedding-3-small",
+        batch_size=batch_size
     )
 
     # 加载摘要文件
     summaries_dir = "./summaries"
     documents, file_names = load_summaries(summaries_dir)
 
-    # 获取集合
+    # 获取或创建集合
     collection_name = "articles_collection"
-    # 如果集合已存在，先删除它
-    if collection_name in [col.name for col in client.list_collections()]:
-        client.delete_collection(collection_name)
-    
-    # 创建新的集合
-    collection = client.create_collection(collection_name, embedding_function=custom_ef)
-
-    # 添加新文档
-    collection.add(
-        documents=documents,
-        ids=[f"doc_{i}" for i in range(len(documents))],
-        metadatas=[{"file_name": fname} for fname in file_names]
-    )
+    try:
+        collection = client.get_collection(collection_name, embedding_function=custom_ef)
+        # 获取现有文档的文件名
+        existing_metadata = collection.get()["metadatas"]
+        existing_files = set(meta["file_name"] for meta in existing_metadata) if existing_metadata else set()
+        
+        # 找出新增的文档
+        new_docs = []
+        new_ids = []
+        new_metadatas = []
+        for i, (doc, fname) in enumerate(zip(documents, file_names)):
+            if fname not in existing_files:
+                new_docs.append(doc)
+                new_ids.append(f"doc_{len(existing_files) + i}")
+                new_metadatas.append({"file_name": fname})
+        
+        # 只添加新文档
+        if new_docs:
+            collection.add(
+                documents=new_docs,
+                ids=new_ids,
+                metadatas=new_metadatas
+            )
+    except Exception as e:
+        # 如果集合不存在，创建新的集合
+        collection = client.create_collection(collection_name, embedding_function=custom_ef)
+        collection.add(
+            documents=documents,
+            ids=[f"doc_{i}" for i in range(len(documents))],
+            metadatas=[{"file_name": fname} for fname in file_names]
+        )
 
     # 查询文档
     results = collection.query(
@@ -106,7 +131,7 @@ def search_similar_articles(query: str, top_k: int = 3) -> List[tuple[str, float
 # 使用示例
 if __name__ == "__main__":
     query = "注意力机制"
-    similar_articles = search_similar_articles(query, top_k=3)
-    print("\n相关文章及其相似度：")
+    similar_articles = search_similar_articles(query, top_k=3, batch_size=10)
+    print("相关文章及其相似度：")
     for article, distance in similar_articles:
         print(f"距离: {distance:.4f} - {article}")
