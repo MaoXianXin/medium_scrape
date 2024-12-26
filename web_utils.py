@@ -68,15 +68,6 @@ def extract_article_urls(driver, selector="a[rel='noopener follow']"):
         if any(pattern in base_url for pattern in non_article_patterns):
             should_skip = True
             
-        # 2. 跳过出版物主页 (URL结构为 medium.com/publication-name)
-        url_parts = base_url.split('/')
-        if len(url_parts) <= 4:  # https://medium.com/publication-name
-            should_skip = True
-            
-        # 3. 跳过用户主页 (URL结构为 medium.com/@username)
-        if len(url_parts) == 4 and url_parts[3].startswith('@'):
-            should_skip = True
-            
         if not should_skip:
             article_urls.add(base_url)
     
