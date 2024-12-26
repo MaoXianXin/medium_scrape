@@ -83,27 +83,50 @@ def search_similar_articles(query: str, top_k: int = 3, batch_size: int = 1000) 
     collection_name = "articles_collection"
     try:
         collection = client.get_collection(collection_name, embedding_function=custom_ef)
-        # 获取现有文档的文件名
-        existing_metadata = collection.get()["metadatas"]
-        existing_files = set(meta["file_name"] for meta in existing_metadata) if existing_metadata else set()
+        # 获取现有文档
+        existing_docs = collection.get()
+        existing_metadata = existing_docs["metadatas"]
+        existing_files = {meta["file_name"]: (doc, id) 
+                         for meta, doc, id in zip(existing_metadata, 
+                                                existing_docs["documents"],
+                                                existing_docs["ids"])} if existing_metadata else {}
         
-        # 找出新增的文档
+        # 处理新增和更新的文档
         new_docs = []
         new_ids = []
         new_metadatas = []
+        update_docs = []
+        update_ids = []
+        update_metadatas = []
+        
         for i, (doc, fname) in enumerate(zip(documents, file_names)):
             if fname not in existing_files:
+                # 新文档
                 new_docs.append(doc)
                 new_ids.append(f"doc_{len(existing_files) + i}")
                 new_metadatas.append({"file_name": fname})
+            elif existing_files[fname][0] != doc:
+                # 文档内容已更新
+                update_docs.append(doc)
+                update_ids.append(existing_files[fname][1])
+                update_metadatas.append({"file_name": fname})
         
-        # 只添加新文档
+        # 添加新文档
         if new_docs:
             collection.add(
                 documents=new_docs,
                 ids=new_ids,
                 metadatas=new_metadatas
             )
+        
+        # 更新已有文档
+        if update_docs:
+            collection.update(
+                documents=update_docs,
+                ids=update_ids,
+                metadatas=update_metadatas
+            )
+            
     except Exception as e:
         # 如果集合不存在，创建新的集合
         collection = client.create_collection(collection_name, embedding_function=custom_ef)
