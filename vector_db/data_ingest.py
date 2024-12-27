@@ -1,4 +1,5 @@
 from vector_db_utils import get_vector_db_client, load_summaries
+import logging
 
 def ingest_documents(
     batch_size: int = 1000,
@@ -20,6 +21,10 @@ def ingest_documents(
         model_name: 使用的模型名称
         db_path: ChromaDB存储路径
     """
+    # 配置日志
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    
+    logging.info(f"开始导入文档到集合: {collection_name}")
     client, custom_ef = get_vector_db_client(
         batch_size=batch_size,
         api_key=api_key,
@@ -30,12 +35,17 @@ def ingest_documents(
     
     # 加载摘要文件
     documents, file_names = load_summaries(summaries_dir)
+    logging.info(f"已加载 {len(documents)} 个文档")
 
     # 获取或创建集合
     try:
         collection = client.get_collection(collection_name, embedding_function=custom_ef)
+        logging.info("成功获取现有集合")
+        
         # 获取现有文档
         existing_docs = collection.get()
+        logging.info(f"集合中已有 {len(existing_docs['documents'])} 个文档")
+        
         existing_metadata = existing_docs["metadatas"]
         existing_files = {meta["file_name"]: (doc, id) 
                          for meta, doc, id in zip(existing_metadata, 
@@ -62,6 +72,7 @@ def ingest_documents(
         
         # 添加新文档
         if new_docs:
+            logging.info(f"添加 {len(new_docs)} 个新文档")
             collection.add(
                 documents=new_docs,
                 ids=new_ids,
@@ -70,6 +81,7 @@ def ingest_documents(
         
         # 更新已有文档
         if update_docs:
+            logging.info(f"更新 {len(update_docs)} 个现有文档")
             collection.update(
                 documents=update_docs,
                 ids=update_ids,
@@ -77,13 +89,22 @@ def ingest_documents(
             )
             
     except Exception as e:
-        # 如果集合不存在，创建新的集合
+        logging.warning(f"集合不存在，创建新集合: {str(e)}")
         collection = client.create_collection(collection_name, embedding_function=custom_ef)
+        logging.info(f"添加 {len(documents)} 个文档到新集合")
         collection.add(
             documents=documents,
             ids=[f"doc_{i}" for i in range(len(documents))],
             metadatas=[{"file_name": fname} for fname in file_names]
         )
+    
+    logging.info("文档导入完成")
 
 if __name__ == "__main__":
-    ingest_documents(batch_size=10)
+    ingest_documents(batch_size=10,
+                     summaries_dir="../summaries",
+                     collection_name="articles_collection",
+                     api_key="sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4",
+                     base_url="https://www.gptapi.us/v1",
+                     model_name="text-embedding-3-small",
+                     db_path="./chroma_db")
