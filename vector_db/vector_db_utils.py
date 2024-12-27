@@ -1,6 +1,7 @@
 import os
 import chromadb
 from vector_utils import CustomOpenAIEmbeddingFunction
+import logging
 
 def get_vector_db_client(
     batch_size: int = 1000,
@@ -38,3 +39,24 @@ def load_summaries(summaries_dir: str) -> tuple[list[str], list[str]]:
                 documents.append(content)
                 file_names.append(file_name)
     return documents, file_names
+
+def delete_collection(
+    collection_name: str = "articles_collection",
+    db_path: str = "./chroma_db"
+) -> bool:
+    """删除指定的向量数据库集合
+    
+    Args:
+        collection_name: 要删除的集合名称
+        db_path: ChromaDB存储路径
+    
+    Returns:
+        bool: 删除是否成功
+    """
+    try:
+        client = chromadb.PersistentClient(path=db_path)
+        client.delete_collection(collection_name)
+        return True
+    except Exception as e:
+        logging.error(f"删除集合时发生错误: {str(e)}")
+        return False
