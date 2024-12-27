@@ -1,5 +1,19 @@
 from vector_db_utils import get_vector_db_client, load_summaries
 import logging
+import hashlib
+
+def generate_doc_id(content: str, filename: str) -> str:
+    """生成文档的唯一ID
+    
+    Args:
+        content: 文档内容
+        filename: 文件名
+    
+    Returns:
+        str: 基于内容和文件名的哈希ID
+    """
+    combined = f"{filename}:{content}"
+    return hashlib.sha256(combined.encode()).hexdigest()
 
 def ingest_documents(
     batch_size: int = 1000,
@@ -8,7 +22,8 @@ def ingest_documents(
     api_key: str = None,
     base_url: str = "https://www.gptapi.us/v1",
     model_name: str = "text-embedding-3-small",
-    db_path: str = "./chroma_db"
+    db_path: str = "./chroma_db",
+    force_update: bool = False
 ):
     """将文档导入到向量数据库中
     
@@ -20,6 +35,7 @@ def ingest_documents(
         base_url: API基础URL
         model_name: 使用的模型名称
         db_path: ChromaDB存储路径
+        force_update: 是否强制更新所有文档，即使内容没有变化
     """
     # 配置日志
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -60,14 +76,15 @@ def ingest_documents(
         update_ids = []
         update_metadatas = []
         
-        for i, (doc, fname) in enumerate(zip(documents, file_names)):
+        for doc, fname in zip(documents, file_names):
+            doc_id = generate_doc_id(doc, fname)
             if fname not in existing_files:
                 new_docs.append(doc)
-                new_ids.append(f"doc_{len(existing_files) + i}")
+                new_ids.append(doc_id)
                 new_metadatas.append({"file_name": fname})
-            elif existing_files[fname][0] != doc:
+            elif force_update or existing_files[fname][0] != doc:
                 update_docs.append(doc)
-                update_ids.append(existing_files[fname][1])
+                update_ids.append(doc_id)
                 update_metadatas.append({"file_name": fname})
         
         # 添加新文档
@@ -94,17 +111,20 @@ def ingest_documents(
         logging.info(f"添加 {len(documents)} 个文档到新集合")
         collection.add(
             documents=documents,
-            ids=[f"doc_{i}" for i in range(len(documents))],
+            ids=[generate_doc_id(doc, fname) for doc, fname in zip(documents, file_names)],
             metadatas=[{"file_name": fname} for fname in file_names]
         )
     
     logging.info("文档导入完成")
 
 if __name__ == "__main__":
-    ingest_documents(batch_size=10,
-                     summaries_dir="../summaries",
-                     collection_name="articles_collection",
-                     api_key="sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4",
-                     base_url="https://www.gptapi.us/v1",
-                     model_name="text-embedding-3-small",
-                     db_path="./chroma_db")
+    ingest_documents(
+        batch_size=10,
+        summaries_dir="../summaries",
+        collection_name="articles_collection",
+        api_key="sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4",
+        base_url="https://www.gptapi.us/v1",
+        model_name="text-embedding-3-small",
+        db_path="./chroma_db",
+        force_update=False
+    )
