@@ -28,6 +28,14 @@ class CustomOpenAIEmbeddingFunction(EmbeddingFunction):
         if not texts:
             return []
 
+        # 添加输入验证
+        if any(not isinstance(text, str) for text in texts):
+            raise ValueError("All elements in texts must be strings")
+            
+        # 添加空字符串检查
+        if any(not text.strip() for text in texts):
+            raise ValueError("Empty strings are not allowed")
+            
         # 批量处理文本
         all_embeddings = []
         for i in range(0, len(texts), self.batch_size):
