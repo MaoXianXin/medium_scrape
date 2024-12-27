@@ -1,15 +1,37 @@
 from vector_db_utils import get_vector_db_client, load_summaries
 
-def ingest_documents(batch_size: int = 1000):
-    """将文档导入到向量数据库中"""
-    client, custom_ef = get_vector_db_client(batch_size)
+def ingest_documents(
+    batch_size: int = 1000,
+    summaries_dir: str = "./summaries",
+    collection_name: str = "articles_collection",
+    api_key: str = None,
+    base_url: str = "https://www.gptapi.us/v1",
+    model_name: str = "text-embedding-3-small",
+    db_path: str = "./chroma_db"
+):
+    """将文档导入到向量数据库中
+    
+    Args:
+        batch_size: 批处理大小
+        summaries_dir: 摘要文件目录路径
+        collection_name: 向量数据库集合名称
+        api_key: OpenAI API密钥
+        base_url: API基础URL
+        model_name: 使用的模型名称
+        db_path: ChromaDB存储路径
+    """
+    client, custom_ef = get_vector_db_client(
+        batch_size=batch_size,
+        api_key=api_key,
+        base_url=base_url,
+        model_name=model_name,
+        db_path=db_path
+    )
     
     # 加载摘要文件
-    summaries_dir = "./summaries"
     documents, file_names = load_summaries(summaries_dir)
 
     # 获取或创建集合
-    collection_name = "articles_collection"
     try:
         collection = client.get_collection(collection_name, embedding_function=custom_ef)
         # 获取现有文档
@@ -64,4 +86,4 @@ def ingest_documents(batch_size: int = 1000):
         )
 
 if __name__ == "__main__":
-    ingest_documents(batch_size=10) 
+    ingest_documents(batch_size=10)
