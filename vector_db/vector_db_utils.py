@@ -19,7 +19,12 @@ def get_vector_db_client(
         model_name: 使用的模型名称
         db_path: ChromaDB存储路径
     """
-    client = chromadb.PersistentClient(path=db_path)
+    client = chromadb.PersistentClient(
+        path=db_path,
+        settings=chromadb.Settings(
+            anonymized_telemetry=False
+        )
+    )
     custom_ef = CustomOpenAIEmbeddingFunction(
         api_key=api_key,
         base_url=base_url,

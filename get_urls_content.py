@@ -13,6 +13,9 @@ def main():
     chrome_driver_path = "/home/mao/Downloads/chromedriver-linux64/chromedriver"
     chrome_binary_path = "/home/mao/Downloads/chrome-linux64/chrome"
     
+    # 设置请求间隔时间（秒）- 每分钟10篇文章
+    REQUEST_INTERVAL = 6
+    
     # 创建文章保存目录
     create_articles_directory()
     
@@ -41,8 +44,9 @@ def main():
                 driver.quit()
                 sys.exit(1)
             
-            # 添加延时，避免请求过于频繁
-            time.sleep(5)
+            # 使用新的延时间隔
+            print(f"等待 {REQUEST_INTERVAL} 秒后处理下一篇文章...")
+            time.sleep(REQUEST_INTERVAL)
             
     except Exception as e:
         print(f"发生错误: {str(e)}")
