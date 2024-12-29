@@ -86,14 +86,14 @@ class ArticleGenerator:
         response = self.client.get_completion(messages, system_prompt)
         
         if output_file is None:
-            output_file = f"generated_{Path(article_file).stem}.txt"
+            output_file = Path(article_file).name
         
         self.save_article(response.content, output_file)
         return response.content
 
     def generate_batch(self) -> list[tuple[str, str]]:
         """
-        批量处理summaries和articles目录下的所有配对文件
+        批量处理summaries和articles目录下的所有配对文件，跳过已经生成的文章
         
         Returns:
             list[tuple[str, str]]: 包含(文件名, 生成内容)的列表
@@ -101,20 +101,32 @@ class ArticleGenerator:
         results = []
         # 获取summaries目录下所有txt文件
         framework_files = list(self.summaries_dir.glob("*.txt"))
+        total_files = len(framework_files)
         
-        for framework_path in framework_files:
+        print(f"开始批量处理，共发现 {total_files} 个文件")
+        
+        for idx, framework_path in enumerate(framework_files, 1):
             framework_name = framework_path.name
             article_path = self.articles_dir / framework_name
+            output_path = self.output_dir / framework_name
             
-            # 检查对应的article文件是否存在
+            print(f"[{idx}/{total_files}] 正在处理: {framework_name}")
+            
             if not article_path.exists():
                 print(f"警告: 未找到对应的文章文件 {framework_name}")
                 continue
                 
-            # 生成文章
-            output_file = f"generated_{framework_path.stem}.txt"
-            content = self.generate(framework_name, framework_name, output_file)
-            results.append((output_file, content))
+            # 检查输出文件是否已存在
+            if output_path.exists():
+                print(f"跳过已存在的文章: {framework_name}")
+                content = self.read_file(output_path)
+                results.append((framework_name, content))
+                continue
+                
+            print(f"正在生成新文章: {framework_name}")
+            content = self.generate(framework_name, framework_name)
+            print(f"文章生成完成: {framework_name}")
+            results.append((framework_name, content))
             
         return results
 
