@@ -13,14 +13,18 @@ def main():
     chrome_driver_path = "/home/mao/Downloads/chromedriver-linux64/chromedriver"
     chrome_binary_path = "/home/mao/Downloads/chrome-linux64/chrome"
     
-    # 设置请求间隔时间（秒）- 每分钟10篇文章
-    REQUEST_INTERVAL = 6
+    # 设置请求间隔时间（秒）- 每分钟6篇文章
+    REQUEST_INTERVAL = 10
     
     # 创建文章保存目录
     create_articles_directory()
     
     # 初始化浏览器
     driver = init_driver(chrome_driver_path, chrome_binary_path)
+    
+    # 等待用户登录并确认
+    input("请在浏览器中完成登录，完成后按回车键继续...")
+    print("开始抓取文章...")
     
     try:
         # 读取文章URL列表
