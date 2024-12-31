@@ -1,5 +1,5 @@
 from typing import List
-from vector_db_utils import get_vector_db_client
+from vector_db.vector_db_utils import get_vector_db_client
 
 def search_similar_articles(
     query: str, 

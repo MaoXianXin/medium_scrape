@@ -1,6 +1,6 @@
 import os
 import chromadb
-from vector_utils import CustomOpenAIEmbeddingFunction
+from vector_db.vector_utils import CustomOpenAIEmbeddingFunction
 import logging
 
 def get_vector_db_client(
