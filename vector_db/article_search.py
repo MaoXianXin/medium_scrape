@@ -49,6 +49,10 @@ def search_similar_articles(
     
     return similar_articles
 
+"""
+python -m vector_db.article_search
+"""
+
 if __name__ == "__main__":
     query = "注意力机制"
     similar_articles = search_similar_articles(
@@ -58,7 +62,7 @@ if __name__ == "__main__":
         api_key="sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4", 
         base_url="https://www.gptapi.us/v1", 
         model_name="text-embedding-3-small", 
-        db_path="./chroma_db",
+        db_path="./vector_db/chroma_db",
         collection_name="articles_collection"
     )
     print("相关文章及其相似度：")
