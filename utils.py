@@ -29,6 +29,8 @@ class OpenAIClient:
             api_key=api_key,
             base_url=base_url
         )
+        self.api_key = api_key
+        self.base_url = base_url
         self.model_name = model_name
         
     def get_completion(
