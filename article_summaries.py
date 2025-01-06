@@ -27,14 +27,14 @@ class KnowledgeFrameworkService:
     
     def _read_framework_prompt(self) -> str:
         """读取知识框架提示词"""
-        return read_file("Prompt知识框架.txt")
+        return read_file("Prompt文章总结.txt")
     
     def generate_single_framework(self, article_content: str) -> str:
         """为单篇文章生成知识框架"""
         return self.framework_generator.generate(
             article_content,
             self.framework_prompt,
-            system_prompt="你是一位专业的知识框架生成专家"
+            system_prompt="你是一位专业的文章分析专家。"
         )
     
     def batch_generate_frameworks(self, input_dir: str, output_dir: str) -> None:

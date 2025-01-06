@@ -8,3 +8,5 @@ generated_articles/
 summaries/
 
 vector_db/chroma_db/
+
+KnowledgeFramework/
