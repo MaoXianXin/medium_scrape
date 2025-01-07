@@ -16,25 +16,29 @@ def read_file(file_path: str) -> str:
 class KnowledgeFrameworkService:
     """知识框架生成服务类"""
     
-    def __init__(self, api_key: str, base_url: str, model_name: str):
+    def __init__(self, api_key: str, base_url: str, model_name: str, 
+                 prompt_file_path: str = "Prompt知识框架.txt",
+                 system_prompt: str = "你是一位专业的知识框架生成专家"):
         self.ai_client = OpenAIClient(
             api_key=api_key,
             base_url=base_url, 
             model_name=model_name
         )
         self.framework_generator = KnowledgeFrameworkGenerator(self.ai_client)
+        self.prompt_file_path = prompt_file_path
+        self.system_prompt = system_prompt
         self.framework_prompt = self._read_framework_prompt()
     
     def _read_framework_prompt(self) -> str:
         """读取知识框架提示词"""
-        return read_file("Prompt知识框架.txt")
+        return read_file(self.prompt_file_path)
     
     def generate_single_framework(self, article_content: str) -> str:
         """为单篇文章生成知识框架"""
         return self.framework_generator.generate(
             article_content,
             self.framework_prompt,
-            system_prompt="你是一位专业的知识框架生成专家"
+            system_prompt=self.system_prompt
         )
     
     def batch_generate_frameworks(self, input_dir: str, output_dir: str) -> None:
@@ -72,7 +76,9 @@ def main():
     service = KnowledgeFrameworkService(
         api_key="sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4",
         base_url="https://www.gptapi.us/v1",
-        model_name="gpt-4o-mini"
+        model_name="gpt-4o-mini",
+        prompt_file_path="Prompt知识框架.txt",
+        system_prompt="你是一位专业的知识框架生成专家"
     )
     service.batch_generate_frameworks("articles", "summaries")
 
