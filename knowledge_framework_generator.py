@@ -72,6 +72,16 @@ class KnowledgeFrameworkService:
             except Exception as e:
                 print(f"处理文件 {filename} 时发生错误: {str(e)}")
 
+"""
+# 知识框架生成器
+prompt_file_path="Prompt知识框架.txt"
+system_prompt="你是一位专业的知识框架生成专家"
+
+# 文章总结
+prompt_file_path="Prompt文章总结.txt"
+system_prompt="你是一位专业的文章分析专家"
+"""
+
 def main():
     service = KnowledgeFrameworkService(
         api_key="sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4",
