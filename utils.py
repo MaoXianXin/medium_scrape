@@ -87,9 +87,12 @@ class KnowledgeFrameworkGenerator:
         messages = [
             {
                 "role": "user",
-                "content": f"请根据以下提示词和文章内容，生成规范的知识框架：\n\n"
-                          f"提示词：\n{framework_prompt}\n\n"
-                          f"文章内容：\n{article_content}"
+                "content": f"""任务说明：{framework_prompt}
+
+输入内容：
+{article_content}
+
+请按照以上任务说明处理输入内容。"""
             }
         ]
         
