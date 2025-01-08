@@ -1,6 +1,7 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Tuple
 from utils import OpenAIClient
+from concurrent.futures import ThreadPoolExecutor
 
 class ArticleGenerator:
     def __init__(
@@ -91,43 +92,47 @@ class ArticleGenerator:
         self.save_article(response.content, output_file)
         return response.content
 
-    def generate_batch(self) -> list[tuple[str, str]]:
+    def generate_batch(self, max_workers: int = 3) -> List[Tuple[str, str]]:
         """
-        批量处理summaries和articles目录下的所有配对文件，跳过已经生成的文章
+        并行批量处理summaries和articles目录下的所有配对文件
         
+        Args:
+            max_workers: 最大并行工作线程数
+            
         Returns:
-            list[tuple[str, str]]: 包含(文件名, 生成内容)的列表
+            List[Tuple[str, str]]: 包含(文件名, 生成内容)的列表
         """
         results = []
-        # 获取summaries目录下所有txt文件
         framework_files = list(self.summaries_dir.glob("*.txt"))
         total_files = len(framework_files)
         
-        print(f"开始批量处理，共发现 {total_files} 个文件")
+        print(f"开始并行批量处理，共发现 {total_files} 个文件，使用 {max_workers} 个工作线程")
         
-        for idx, framework_path in enumerate(framework_files, 1):
+        def process_file(framework_path: Path) -> Tuple[str, str]:
             framework_name = framework_path.name
             article_path = self.articles_dir / framework_name
             output_path = self.output_dir / framework_name
             
-            print(f"[{idx}/{total_files}] 正在处理: {framework_name}")
-            
             if not article_path.exists():
                 print(f"警告: 未找到对应的文章文件 {framework_name}")
-                continue
+                return framework_name, ""
                 
-            # 检查输出文件是否已存在
             if output_path.exists():
                 print(f"跳过已存在的文章: {framework_name}")
-                content = self.read_file(output_path)
-                results.append((framework_name, content))
-                continue
+                return framework_name, self.read_file(output_path)
                 
             print(f"正在生成新文章: {framework_name}")
             content = self.generate(framework_name, framework_name)
             print(f"文章生成完成: {framework_name}")
-            results.append((framework_name, content))
+            return framework_name, content
             
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(process_file, path) for path in framework_files]
+            for future in futures:
+                filename, content = future.result()
+                if content:  # 只添加成功生成的结果
+                    results.append((filename, content))
+                
         return results
 
 if __name__ == "__main__":
@@ -138,9 +143,12 @@ if __name__ == "__main__":
         model_name="gpt-4o-mini"
     )
 
-    # 初始化文章生成器
-    article_generator = ArticleGenerator(client)
-
-    # 批量生成所有文章
-    results = article_generator.generate_batch()
+    # 初始化文章生成器并设置8个并行线程
+    article_generator = ArticleGenerator(
+        client,
+        summaries_dir="knowledge_frameworks",
+        articles_dir="articles",
+        output_dir="generated_articles"
+    )
+    results = article_generator.generate_batch(max_workers=8)
     print(f"已处理 {len(results)} 篇文章")
