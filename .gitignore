@@ -10,3 +10,7 @@ summaries/
 vector_db/chroma_db/
 
 KnowledgeFramework/
+
+article_summaries/
+
+knowledge_frameworks/

@@ -1,4 +1,4 @@
-from vector_db_utils import get_vector_db_client, load_summaries
+from vector_db.vector_db_utils import get_vector_db_client, load_summaries
 import logging
 import hashlib
 
@@ -117,14 +117,18 @@ def ingest_documents(
     
     logging.info("文档导入完成")
 
+"""
+python -m vector_db.data_ingest
+"""
+
 if __name__ == "__main__":
     ingest_documents(
         batch_size=10,
-        summaries_dir="../summaries",
+        summaries_dir="./knowledge_frameworks",
         collection_name="articles_collection",
         api_key="sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4",
         base_url="https://www.gptapi.us/v1",
         model_name="text-embedding-3-small",
-        db_path="./chroma_db",
+        db_path="./vector_db/chroma_db",
         force_update=False
     )
