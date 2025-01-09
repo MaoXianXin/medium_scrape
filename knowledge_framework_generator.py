@@ -91,25 +91,53 @@ class KnowledgeFrameworkService:
                 else:
                     print(f"处理文件 {filename} 时发生错误: {status}")
 
-"""
-# 知识框架生成器
-prompt_file_path="Prompt知识框架.txt"
-system_prompt="你是一位专业的知识框架生成专家"
+class ServiceConfig:
+    """服务配置类"""
+    CONFIGS = {
+        "knowledge_framework": {
+            "prompt_file_path": "Prompt知识框架.txt",
+            "system_prompt": "你是一位专业的知识框架生成专家",
+            "input_dir": "articles",
+            "output_dir": "knowledge_frameworks"
+        },
+        "article_summary": {
+            "prompt_file_path": "Prompt文章总结.txt",
+            "system_prompt": "你是一位专业的文章分析专家",
+            "input_dir": "articles",
+            "output_dir": "article_summaries"
+        }
+    }
 
-# 文章总结
-prompt_file_path="Prompt文章总结.txt"
-system_prompt="你是一位专业的文章分析专家"
-"""
+    @classmethod
+    def get_config(cls, service_type: str) -> dict:
+        """获取指定服务类型的配置"""
+        if service_type not in cls.CONFIGS:
+            raise ValueError(f"不支持的服务类型: {service_type}")
+        return cls.CONFIGS[service_type]
 
 def main():
+    # API配置
+    api_config = {
+        "api_key": "sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4",
+        "base_url": "https://www.gptapi.us/v1",
+        "model_name": "gpt-4o-mini"
+    }
+    
+    # 选择服务类型
+    service_type = "article_summary"  # 或 "knowledge_framework"
+    config = ServiceConfig.get_config(service_type)
+    
     service = KnowledgeFrameworkService(
-        api_key="sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4",
-        base_url="https://www.gptapi.us/v1",
-        model_name="gpt-4o-mini",
-        prompt_file_path="Prompt文章总结.txt",
-        system_prompt="你是一位专业的文章分析专家"
+        **api_config,
+        prompt_file_path=config["prompt_file_path"],
+        system_prompt=config["system_prompt"]
     )
-    service.batch_generate_frameworks("articles", "test_summaries", max_workers=8)
+    
+    service.batch_generate_frameworks(
+        input_dir=config["input_dir"],
+        output_dir=config["output_dir"],
+        max_workers=8
+    )
 
 if __name__ == "__main__":
     main()
