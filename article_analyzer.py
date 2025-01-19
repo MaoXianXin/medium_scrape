@@ -420,7 +420,7 @@ class ArticleAnalyzer:
                 f.write(f"核心观点：{point}\n")
                 f.write("详细分析：\n")
                 f.write(analysis)
-                f.write("\n" + "=" * 50 + "\n\n")
+                f.write("\n\n" + "=" * 50 + "\n\n")
         
         # 保存完整内容到单个文件
         with open(os.path.join(output_dir, "complete_analysis.txt"), "w", encoding="utf-8") as f:
@@ -433,7 +433,7 @@ class ArticleAnalyzer:
                 f.write(f"核心观点：{point}\n")
                 f.write("详细分析：\n")
                 f.write(analysis)
-                f.write("\n" + "=" * 50 + "\n\n")
+                f.write("\n\n" + "=" * 50 + "\n\n")
         
         return {
             'title': title,
