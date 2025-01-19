@@ -2,16 +2,58 @@
 """
 flowchart TD
     A["原始文章 
-    (Original Article)"] --> B["文章总结提示词 
-    (Summary Prompt)"]
-    B --> C["文章总结 
-    (Article Summary)"]
-    C --> D["核心观点提取提示词 
-    (Core Points Extraction Prompt)"]
-    D --> E["核心观点列表 
-    (Core Points List)"]
+    (Original Article)"] --> O["文章分段 
+    (Article Segmentation)"]
+    O --> P["按Tokens=2000切分 
+    (Segment by 2000 Tokens)"]
     
-    A & E --> F["详细分析提示词 
+    subgraph Segmentation["分段处理 (Segment Processing)"]
+        P --> Q["分段文章1 
+        (Segment 1)"]
+        P --> R["分段文章2 
+        (Segment 2)"]
+        P --> S["分段文章N 
+        (Segment N)"]
+    end
+    
+    subgraph SummaryProcess["总结处理流程 (Summary Process)"]
+        Q --> B1["文章总结提示词 
+        (Summary Prompt 1)"]
+        B1 --> C1["文章总结1 
+        (Article Summary 1)"]
+        C1 --> D1["核心观点提取提示词 
+        (Core Points Extraction Prompt 1)"]
+        D1 --> E1["核心观点列表1 
+        (Core Points List 1)"]
+        
+        R --> B2["文章总结提示词 
+        (Summary Prompt 2)"]
+        B2 --> C2["文章总结2 
+        (Article Summary 2)"]
+        C2 --> D2["核心观点提取提示词 
+        (Core Points Extraction Prompt 2)"]
+        D2 --> E2["核心观点列表2 
+        (Core Points List 2)"]
+        
+        S --> BN["文章总结提示词 
+        (Summary Prompt N)"]
+        BN --> CN["文章总结N 
+        (Article Summary N)"]
+        CN --> DN["核心观点提取提示词 
+        (Core Points Extraction Prompt N)"]
+        DN --> EN["核心观点列表N 
+        (Core Points List N)"]
+    end
+    
+    C1 & C2 & CN --> X["完整文章总结 
+    (Comprehensive Article Summary)"]
+    
+    E1 & E2 & EN --> T["观点整理提示词 
+    (Core Points Consolidation Prompt)"]
+    T --> U["最终核心观点列表 
+    (Final Consolidated Core Points List)"]
+    
+    A & U --> F["详细分析提示词 
     (Detailed Analysis Prompt)"]
     F --> G["每个核心观点的详细分析 
     (Detailed Analysis for Each Point)"]
@@ -21,11 +63,12 @@ flowchart TD
     H --> I["标题和文章信息摘要
     (Title and Article Brief)"]
     
-    I & C & E & G --> J["保存分析结果 
+    I & X & U & G --> J["保存分析结果 
     (Save Analysis Results)"]
     
     subgraph Output["输出文件 (Output Files)"]
-        K["summary.txt"]
+        K["summary.txt: 文章总结1 + 文章总结2 + ... + 文章总结N 
+        (Concatenated Summaries)"]
         L["core_points.txt"]
         M["detailed_points.txt"]
         N["complete_analysis.txt"]
@@ -40,9 +83,10 @@ import os
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 import json
+import tiktoken
 
 class ArticleAnalyzer:
-    def __init__(self, openai_api_key, model="gpt-4-turbo", temperature=0.3, base_url=None):
+    def __init__(self, openai_api_key, model="gpt-4-turbo", temperature=0.3, base_url=None, max_tokens_per_segment=2000):
         """
         Initialize the ArticleAnalyzer with OpenAI API key and optional parameters
         
@@ -51,6 +95,7 @@ class ArticleAnalyzer:
             model (str, optional): OpenAI model to use. Defaults to "gpt-4-turbo"
             temperature (float, optional): Model temperature setting. Defaults to 0.3
             base_url (str, optional): Base URL for API endpoint
+            max_tokens_per_segment (int, optional): Maximum tokens per segment. Defaults to 2000
         """
         os.environ["OPENAI_API_KEY"] = openai_api_key
         
@@ -62,6 +107,8 @@ class ArticleAnalyzer:
             llm_params["base_url"] = base_url
         
         self.llm = ChatOpenAI(**llm_params)
+        self.max_tokens_per_segment = max_tokens_per_segment
+        self.tokenizer = tiktoken.encoding_for_model("gpt-4-turbo")
 
     def generate_summary(self, article):
         """
@@ -120,7 +167,7 @@ class ArticleAnalyzer:
             summary (str): Summarized article
         
         Returns:
-            dict: Core points in JSON format
+            list: List of core points extracted from the summary. Returns empty list if extraction fails or no points found.
         """
         core_points_prompt = PromptTemplate(
             input_variables=["summary"],
@@ -166,7 +213,9 @@ class ArticleAnalyzer:
             core_points (list): List of core points as strings
         
         Returns:
-            dict: Detailed information for each core point
+            dict: Detailed information for each core point, where:
+                - keys are the core points (str)
+                - values are the detailed analysis (str) for each point
         """
         detailed_points = {}
         
@@ -201,13 +250,13 @@ class ArticleAnalyzer:
 
     def generate_title_and_brief(self, detailed_analysis):
         """
-        基于详细分析生成文章标题和简要信息摘要
+        Generate article title and brief summary based on detailed analysis
         
         Args:
-            detailed_analysis (dict): 详细分析内容
+            detailed_analysis (dict): Detailed analysis content
             
         Returns:
-            tuple: (标题, 简要摘要)
+            tuple: (title: str, brief: str)
         """
         title_prompt = PromptTemplate(
             input_variables=["analysis"],
@@ -241,6 +290,73 @@ class ArticleAnalyzer:
         
         return title.strip(), brief.strip()
 
+    def segment_article(self, article):
+        """
+        Segment article based on specified token count
+        
+        Args:
+            article (str): Full article text
+        
+        Returns:
+            list: List of article segments
+        """
+        tokens = self.tokenizer.encode(article)
+        segments = []
+        current_segment_tokens = []
+        current_length = 0
+        
+        for token in tokens:
+            if current_length >= self.max_tokens_per_segment:
+                segment_text = self.tokenizer.decode(current_segment_tokens)
+                segments.append(segment_text)
+                current_segment_tokens = [token]
+                current_length = 1
+            else:
+                current_segment_tokens.append(token)
+                current_length += 1
+        
+        if current_segment_tokens:
+            segment_text = self.tokenizer.decode(current_segment_tokens)
+            segments.append(segment_text)
+        
+        return segments
+
+    def consolidate_core_points(self, all_core_points):
+        """
+        Consolidate core points from all segments
+        
+        Args:
+            all_core_points (list): List of core points from all segments
+        
+        Returns:
+            list: Consolidated list of core points. Returns empty list if consolidation fails or no points found.
+        """
+        consolidation_prompt = PromptTemplate(
+            input_variables=["points"],
+            template="""请整合以下来自不同文章片段的核心观点，去除重复内容，保持观点的连贯性和完整性：
+
+现有观点：
+{points}
+
+请返回整合后的核心观点，使用以下JSON格式：
+{{
+    "points": [
+        "整合后的观点1",
+        "整合后的观点2"
+    ]
+}}"""
+        )
+        
+        points_str = "\n".join([f"- {point}" for sublist in all_core_points for point in sublist])
+        chain = consolidation_prompt | self.llm
+        result = chain.invoke({"points": points_str}).content
+        
+        try:
+            consolidated = json.loads(result)
+            return consolidated.get('points', [])
+        except json.JSONDecodeError:
+            return []
+
     def analyze_article(self, article):
         """
         Complete article analysis workflow
@@ -249,28 +365,52 @@ class ArticleAnalyzer:
             article (str): Full article text
         
         Returns:
-            dict: Comprehensive article analysis
+            dict: Comprehensive article analysis containing:
+                - title (str): Article title
+                - brief (str): Brief summary
+                - summary (str): Full article summary
+                - core_points (list): List of core points
+                - detailed_points (dict): Detailed analysis for each core point
         """
-        # 1. 生成文章摘要
-        summary = self.generate_summary(article)
+        # 1. 文章分段
+        segments = self.segment_article(article)
         
-        # 2. 提取核心观点
-        core_points = self.extract_core_points(summary)
+        # 2. 对每个分段进行分析
+        segment_summaries = []
+        segment_core_points = []
         
-        # 3. 提取详细信息
-        detailed_points = self.extract_detailed_points(article, core_points)
+        for segment in segments:
+            # 生成每个分段的摘要
+            summary = self.generate_summary(segment)
+            segment_summaries.append(summary)
+            
+            # 提取每个分段的核心观点
+            core_points = self.extract_core_points(summary)
+            segment_core_points.append(core_points)
         
-        # 4. 保存结果到文件
+        # 3. 合并所有分段的摘要
+        full_summary = "\n\n".join(segment_summaries)
+        
+        # 4. 整合所有分段的核心观点
+        consolidated_points = self.consolidate_core_points(segment_core_points)
+        
+        # 5. 对整合后的核心观点进行详细分析
+        detailed_points = self.extract_detailed_points(article, consolidated_points)
+        
+        # 6. 生成标题和简要摘要
+        title, brief = self.generate_title_and_brief(detailed_points)
+        
+        # 7. 保存结果到文件
         output_dir = "analysis_results"
         os.makedirs(output_dir, exist_ok=True)
         
         # 保存摘要
         with open(os.path.join(output_dir, "summary.txt"), "w", encoding="utf-8") as f:
-            f.write(summary)
+            f.write(full_summary)
         
         # 保存核心观点
         with open(os.path.join(output_dir, "core_points.txt"), "w", encoding="utf-8") as f:
-            for point in core_points:
+            for point in consolidated_points:
                 f.write(f"{point}\n")
                 f.write("-" * 50 + "\n")
         
@@ -281,9 +421,6 @@ class ArticleAnalyzer:
                 f.write("详细分析：\n")
                 f.write(analysis)
                 f.write("\n" + "=" * 50 + "\n\n")
-        
-        # 生成标题和简要摘要
-        title, brief = self.generate_title_and_brief(detailed_points)
         
         # 保存完整内容到单个文件
         with open(os.path.join(output_dir, "complete_analysis.txt"), "w", encoding="utf-8") as f:
@@ -301,8 +438,8 @@ class ArticleAnalyzer:
         return {
             'title': title,
             'brief': brief,
-            'summary': summary,
-            'core_points': core_points,
+            'summary': full_summary,
+            'core_points': consolidated_points,
             'detailed_points': detailed_points
         }
 
@@ -318,7 +455,7 @@ def main():
     )
     
     # 从文件读取文章内容
-    file_path = "/home/mao/workspace/medium_scrape/articles/1-bit-quantization-run-models-with-trillions-of-parameters-on-your-computer-442617a61440.txt"  # 指定文件路径
+    file_path = "/home/mao/workspace/medium_scrape/articles/5-concepts-that-must-be-in-your-llm-fine-tuning-kit-59183c7ce60e.txt"  # 指定文件路径
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             article = file.read()
