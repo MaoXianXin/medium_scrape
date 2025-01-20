@@ -192,16 +192,21 @@ class ArticleAnalyzer:
         
         chain = core_points_prompt | self.llm
         core_points_str = chain.invoke({"summary": summary}).content
-        
+        print("原始输出:", core_points_str)
         try:
+            print("尝试解析 JSON...")
             core_points = json.loads(core_points_str)
+            print("JSON 解析成功:", core_points)
             return core_points.get('points', [])
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            print("JSON 解析失败:", str(e))
             core_points_str = core_points_str.split('```json')[-1].split('```')[0].strip()
             try:
                 core_points = json.loads(core_points_str)
+                print("第二次尝试解析成功:", core_points)
                 return core_points.get('points', [])
-            except:
+            except Exception as e:
+                print("第二次解析也失败:", str(e))
                 return []
 
     def extract_detailed_points(self, article, core_points):
@@ -221,41 +226,13 @@ class ArticleAnalyzer:
         
         detailed_prompt = PromptTemplate(
             input_variables=["article", "point"],
-            template="""基于原文，对以下核心观点进行多维度深入分析:
-
-核心观点: {point}
-
-请从以下维度展开分析：
-
-1. 论据支撑 Evidence：
-- 直接引用原文中支持该观点的关键段落
-- 列举具体数据、案例或事实依据
-- 识别作者使用的论证方法
-
-2. 上下文分析 Context：
-- 观点产生的背景和前提条件
-- 与其他观点的关联性和逻辑关系
-- 时间和空间维度的相关性
-
-3. 深层解读 Interpretation：
-- 观点背后的核心理念和价值取向
-- 隐含的假设和潜在的局限性
-- 理论基础或概念框架
-
-4. 影响评估 Impact Analysis：
-- 短期直接影响
-- 长期潜在影响
-- 跨领域延伸效应
-
-5. 实践意义 Practical Implications：
-- 实际应用场景
-- 可行性分析
-- 实施建议或解决方案
-
-原文:
+            template="""原文:
+================
 {article}
+================
 
-请基于以上维度进行分析："""
+展开讲讲这点: {point}
+"""
         )
         
         detailed_chain = detailed_prompt | self.llm
@@ -397,16 +374,28 @@ class ArticleAnalyzer:
 2. 每个观点应该独立成文
 3. 严格遵守JSON格式要求"""
         )
-        
+        print("整合前的核心观点:", all_core_points)
         points_str = "\n".join([f"- {point}" for sublist in all_core_points for point in sublist])
         chain = consolidation_prompt | self.llm
         result = chain.invoke({"points": points_str}).content
         
+        print("原始输出:", result)
         try:
+            print("尝试解析 JSON...")
             consolidated = json.loads(result)
+            print("JSON 解析成功:", consolidated)
             return consolidated.get('points', [])
-        except json.JSONDecodeError:
-            return []
+        except json.JSONDecodeError as e:
+            print("JSON 解析失败:", str(e))
+            # 处理可能包含的 markdown 代码块
+            result = result.split('```json')[-1].split('```')[0].strip()
+            try:
+                consolidated = json.loads(result)
+                print("第二次尝试解析成功:", consolidated)
+                return consolidated.get('points', [])
+            except Exception as e:
+                print("第二次解析也失败:", str(e))
+                return []
 
     def analyze_article(self, article):
         """
@@ -444,6 +433,7 @@ class ArticleAnalyzer:
         
         # 4. 整合所有分段的核心观点
         consolidated_points = self.consolidate_core_points(segment_core_points)
+        print("整合后的核心观点:", consolidated_points)
         
         # 5. 对整合后的核心观点进行详细分析
         detailed_points = self.extract_detailed_points(article, consolidated_points)
@@ -500,7 +490,7 @@ def main():
     base_url = "https://www.gptapi.us/v1"  # 可选
     analyzer = ArticleAnalyzer(
         openai_api_key,
-        model="claude-3-5-sonnet",
+        model="gpt-4o",
         temperature=0.5,
         base_url=base_url
     )
