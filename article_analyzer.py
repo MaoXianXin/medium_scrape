@@ -2,8 +2,14 @@
 """
 flowchart TD
     A["原始文章 
-    (Original Article)"] --> O["文章分段 
+    (Original Article)"] --> T1["检查文章Tokens
+    (Check Article Tokens)"]
+    
+    T1 -- "Tokens > 10000" --> T2["跳过分析
+    (Skip Analysis)"]
+    T1 -- "Tokens ≤ 10000" --> O["文章分段 
     (Article Segmentation)"]
+    
     O --> P["按Tokens=2000切分 
     (Segment by 2000 Tokens)"]
     
@@ -412,6 +418,15 @@ class ArticleAnalyzer:
                 - core_points (list): List of core points
                 - detailed_points (dict): Detailed analysis for each core point
         """
+        # Check token count
+        tokens = self.tokenizer.encode(article)
+        token_count = len(tokens)
+        print(f"Article token count: {token_count}")
+        
+        if token_count > 10000:
+            print(f"Article is too long ({token_count} tokens). Maximum allowed is 10,000 tokens.")
+            return None
+        
         # 1. 文章分段
         segments = self.segment_article(article)
         
@@ -486,17 +501,17 @@ class ArticleAnalyzer:
 
 # 使用示例
 def main():
-    openai_api_key = "sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4"
-    base_url = "https://www.gptapi.us/v1"  # 可选
+    openai_api_key = "sk-aPaWCKjH9QlYa1jz37444843701d416f855bD9C5Aa821e50"
+    base_url = "https://api.aisaibasi.icu/v1"  # 可选
     analyzer = ArticleAnalyzer(
         openai_api_key,
-        model="gpt-4o",
+        model="claude-3-5-sonnet-20241022",
         temperature=0.5,
         base_url=base_url
     )
     
     # 从文件读取文章内容
-    file_path = "/home/mao/workspace/medium_scrape/articles/5-concepts-that-must-be-in-your-llm-fine-tuning-kit-59183c7ce60e.txt"  # 指定文件路径
+    file_path = "article.txt"  # 指定文件路径
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             article = file.read()
@@ -512,6 +527,10 @@ def main():
         return
     
     result = analyzer.analyze_article(article)
+    
+    if result is None:
+        print("Analysis skipped due to article length.")
+        return
     
     # 打印结果
     print("文章摘要:", result['summary'])
