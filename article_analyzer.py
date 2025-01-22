@@ -90,6 +90,8 @@ from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 import json
 import tiktoken
+import hashlib
+import time
 
 class ArticleAnalyzer:
     def __init__(self, openai_api_key, model="gpt-4-turbo", temperature=0.3, base_url=None, max_tokens_per_segment=2000):
@@ -116,9 +118,50 @@ class ArticleAnalyzer:
         self.max_tokens_per_segment = max_tokens_per_segment
         self.tokenizer = tiktoken.encoding_for_model("gpt-4-turbo")
 
+    def _save_conversation(self, prompt, response, conversation_type="summary"):
+        """
+        Save conversation history to a JSON file
+        
+        Args:
+            prompt (str): The prompt sent to the model
+            response (str): The model's response
+            conversation_type (str, optional): Type of conversation for reference. Defaults to "summary"
+            
+        Returns:
+            str: The conversation ID
+        """
+        # 生成随机hash值作为对话id
+        conversation_id = hashlib.md5(str(time.time()).encode()).hexdigest()
+        
+        # 构建对话记录
+        conversation_history = [{
+            "id": f"{conversation_type}_{conversation_id}",
+            "conversations": [
+                {
+                    "from": "user",
+                    "value": prompt
+                },
+                {
+                    "from": "assistant",
+                    "value": response
+                }
+            ]
+        }]
+        
+        # 确保保存目录存在
+        save_dir = "conversation_history"
+        os.makedirs(save_dir, exist_ok=True)
+        
+        # 保存对话记录到json文件
+        filename = f"{save_dir}/conversation_{conversation_type}_{conversation_id}.json"
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(conversation_history, f, ensure_ascii=False, indent=2)
+            
+        return conversation_id
+
     def generate_summary(self, article):
         """
-        Generate a summary of the article
+        Generate a summary of the article and save the conversation history
         
         Args:
             article (str): Full text of the article
@@ -162,12 +205,22 @@ class ArticleAnalyzer:
         
         # 使用新的方式创建和调用链
         chain = summary_prompt | self.llm
+        
+        # 获取summary
         summary = chain.invoke({"article": article}).content
+        
+        # 保存对话记录
+        self._save_conversation(
+            prompt=summary_prompt.format(article=article),
+            response=summary,
+            conversation_type="summary"
+        )
+        
         return summary
 
     def extract_core_points(self, summary):
         """
-        Extract core points from the summary in JSON format
+        Extract core points from the summary in JSON format and save the conversation history
         
         Args:
             summary (str): Summarized article
@@ -203,6 +256,12 @@ class ArticleAnalyzer:
             print("尝试解析 JSON...")
             core_points = json.loads(core_points_str)
             print("JSON 解析成功:", core_points)
+            # 只有在成功解析JSON后才保存对话记录
+            self._save_conversation(
+                prompt=core_points_prompt.format(summary=summary),
+                response=core_points_str,
+                conversation_type="core_points"
+            )
             return core_points.get('points', [])
         except json.JSONDecodeError as e:
             print("JSON 解析失败:", str(e))
@@ -217,7 +276,7 @@ class ArticleAnalyzer:
 
     def extract_detailed_points(self, article, core_points):
         """
-        Extract detailed information for each core point
+        Extract detailed information for each core point and save the conversation history
         
         Args:
             article (str): Full article text
@@ -248,13 +307,21 @@ class ArticleAnalyzer:
                 "article": article,
                 "point": point
             }).content
+            
+            # 保存对话记录
+            self._save_conversation(
+                prompt=detailed_prompt.format(article=article, point=point),
+                response=detailed_analysis,
+                conversation_type="detailed_analysis"
+            )
+            
             detailed_points[point] = detailed_analysis
         
         return detailed_points
 
     def generate_title_and_brief(self, detailed_analysis):
         """
-        Generate article title and brief summary based on detailed analysis
+        Generate article title and brief summary based on detailed analysis and save the conversation history
         
         Args:
             detailed_analysis (dict): Detailed analysis content
@@ -292,6 +359,20 @@ class ArticleAnalyzer:
         title = title_chain.invoke({"analysis": full_analysis}).content
         brief = brief_chain.invoke({"analysis": full_analysis}).content
         
+        # 保存标题生成的对话记录
+        self._save_conversation(
+            prompt=title_prompt.format(analysis=full_analysis),
+            response=title,
+            conversation_type="title"
+        )
+        
+        # 保存摘要生成的对话记录
+        self._save_conversation(
+            prompt=brief_prompt.format(analysis=full_analysis),
+            response=brief,
+            conversation_type="brief"
+        )
+        
         return title.strip(), brief.strip()
 
     def segment_article(self, article):
@@ -328,7 +409,7 @@ class ArticleAnalyzer:
 
     def consolidate_core_points(self, all_core_points):
         """
-        Consolidate core points from all segments
+        Consolidate core points from all segments and save the conversation history
         
         Args:
             all_core_points (list): List of core points from all segments
@@ -391,6 +472,12 @@ class ArticleAnalyzer:
             print("尝试解析 JSON...")
             consolidated = json.loads(result)
             print("JSON 解析成功:", consolidated)
+            # 只有在成功解析JSON后才保存对话记录
+            self._save_conversation(
+                prompt=consolidation_prompt.format(points=points_str),
+                response=result,
+                conversation_type="consolidation"
+            )
             return consolidated.get('points', [])
         except json.JSONDecodeError as e:
             print("JSON 解析失败:", str(e))
