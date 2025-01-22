@@ -319,7 +319,8 @@ class ArticleAnalyzer:
                 current_segment_tokens.append(token)
                 current_length += 1
         
-        if current_segment_tokens:
+        # 只有当剩余tokens数量大于等于100时才添加最后一个段落
+        if current_segment_tokens and len(current_segment_tokens) >= 100:
             segment_text = self.tokenizer.decode(current_segment_tokens)
             segments.append(segment_text)
         
