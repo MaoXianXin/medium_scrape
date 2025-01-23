@@ -159,6 +159,14 @@ class ArticleAnalyzer:
             
         return conversation_id
 
+    def _clean_json_string(self, json_str):
+        # 替换中文引号为英文引号
+        json_str = json_str.replace(""", '"').replace(""", '"')
+        # 移除可能的 JSON 代码块标记
+        if '```json' in json_str:
+            json_str = json_str.split('```json')[-1].split('```')[0]
+        return json_str.strip()
+    
     def generate_summary(self, article):
         """
         Generate a summary of the article and save the conversation history
@@ -252,27 +260,22 @@ class ArticleAnalyzer:
         chain = core_points_prompt | self.llm
         core_points_str = chain.invoke({"summary": summary}).content
         print("原始输出:", core_points_str)
+        
         try:
-            print("尝试解析 JSON...")
-            core_points = json.loads(core_points_str)
+            cleaned_json = self._clean_json_string(core_points_str)
+            print("清理后的 JSON:", cleaned_json)
+            core_points = json.loads(cleaned_json)
             print("JSON 解析成功:", core_points)
             # 只有在成功解析JSON后才保存对话记录
-            self._save_conversation(
-                prompt=core_points_prompt.format(summary=summary),
-                response=core_points_str,
-                conversation_type="core_points"
-            )
+            # self._save_conversation(
+            #     prompt=core_points_prompt.format(summary=summary),
+            #     response=core_points_str,
+            #     conversation_type="core_points"
+            # )
             return core_points.get('points', [])
         except json.JSONDecodeError as e:
             print("JSON 解析失败:", str(e))
-            core_points_str = core_points_str.split('```json')[-1].split('```')[0].strip()
-            try:
-                core_points = json.loads(core_points_str)
-                print("第二次尝试解析成功:", core_points)
-                return core_points.get('points', [])
-            except Exception as e:
-                print("第二次解析也失败:", str(e))
-                return []
+            return []
 
     def extract_detailed_points(self, article, core_points):
         """
@@ -309,11 +312,11 @@ class ArticleAnalyzer:
             }).content
             
             # 保存对话记录
-            self._save_conversation(
-                prompt=detailed_prompt.format(article=article, point=point),
-                response=detailed_analysis,
-                conversation_type="detailed_analysis"
-            )
+            # self._save_conversation(
+            #     prompt=detailed_prompt.format(article=article, point=point),
+            #     response=detailed_analysis,
+            #     conversation_type="detailed_analysis"
+            # )
             
             detailed_points[point] = detailed_analysis
         
@@ -360,18 +363,18 @@ class ArticleAnalyzer:
         brief = brief_chain.invoke({"analysis": full_analysis}).content
         
         # 保存标题生成的对话记录
-        self._save_conversation(
-            prompt=title_prompt.format(analysis=full_analysis),
-            response=title,
-            conversation_type="title"
-        )
+        # self._save_conversation(
+        #     prompt=title_prompt.format(analysis=full_analysis),
+        #     response=title,
+        #     conversation_type="title"
+        # )
         
         # 保存摘要生成的对话记录
-        self._save_conversation(
-            prompt=brief_prompt.format(analysis=full_analysis),
-            response=brief,
-            conversation_type="brief"
-        )
+        # self._save_conversation(
+        #     prompt=brief_prompt.format(analysis=full_analysis),
+        #     response=brief,
+        #     conversation_type="brief"
+        # )
         
         return title.strip(), brief.strip()
 
@@ -470,26 +473,20 @@ class ArticleAnalyzer:
         print("原始输出:", result)
         try:
             print("尝试解析 JSON...")
-            consolidated = json.loads(result)
+            cleaned_json = self._clean_json_string(result)
+            print("清理后的 JSON:", cleaned_json)
+            consolidated = json.loads(cleaned_json)
             print("JSON 解析成功:", consolidated)
             # 只有在成功解析JSON后才保存对话记录
-            self._save_conversation(
-                prompt=consolidation_prompt.format(points=points_str),
-                response=result,
-                conversation_type="consolidation"
-            )
+            # self._save_conversation(
+            #     prompt=consolidation_prompt.format(points=points_str),
+            #     response=result,
+            #     conversation_type="consolidation"
+            # )
             return consolidated.get('points', [])
         except json.JSONDecodeError as e:
             print("JSON 解析失败:", str(e))
-            # 处理可能包含的 markdown 代码块
-            result = result.split('```json')[-1].split('```')[0].strip()
-            try:
-                consolidated = json.loads(result)
-                print("第二次尝试解析成功:", consolidated)
-                return consolidated.get('points', [])
-            except Exception as e:
-                print("第二次解析也失败:", str(e))
-                return []
+            return []
 
     def analyze_article(self, article):
         """
@@ -589,11 +586,11 @@ class ArticleAnalyzer:
 
 # 使用示例
 def main():
-    openai_api_key = "sk-aPaWCKjH9QlYa1jz37444843701d416f855bD9C5Aa821e50"
-    base_url = "https://api.aisaibasi.icu/v1"  # 可选
+    openai_api_key = "sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4"
+    base_url = "https://www.gptapi.us/v1"  # 可选
     analyzer = ArticleAnalyzer(
         openai_api_key,
-        model="claude-3-5-sonnet-20241022",
+        model="claude-3-5-sonnet",
         temperature=0.5,
         base_url=base_url
     )
