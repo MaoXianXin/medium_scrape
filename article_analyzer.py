@@ -160,8 +160,6 @@ class ArticleAnalyzer:
         return conversation_id
 
     def _clean_json_string(self, json_str):
-        # 替换中文引号为英文引号
-        json_str = json_str.replace(""", '"').replace(""", '"')
         # 移除可能的 JSON 代码块标记
         if '```json' in json_str:
             json_str = json_str.split('```json')[-1].split('```')[0]
@@ -472,7 +470,6 @@ class ArticleAnalyzer:
         
         print("原始输出:", result)
         try:
-            print("尝试解析 JSON...")
             cleaned_json = self._clean_json_string(result)
             print("清理后的 JSON:", cleaned_json)
             consolidated = json.loads(cleaned_json)
