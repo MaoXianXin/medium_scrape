@@ -491,12 +491,13 @@ class ArticleAnalyzer:
             print("JSON 解析失败:", str(e))
             return []
 
-    def analyze_article(self, article):
+    def analyze_article(self, article, file_prefix=""):
         """
         Complete article analysis workflow
         
         Args:
             article (str): Full article text
+            file_prefix (str): Prefix for output files
         
         Returns:
             dict: Comprehensive article analysis containing:
@@ -548,18 +549,21 @@ class ArticleAnalyzer:
         output_dir = "analysis_results"
         os.makedirs(output_dir, exist_ok=True)
         
+        # 添加文件前缀
+        prefix = f"{file_prefix}_" if file_prefix else ""
+        
         # 保存摘要
-        with open(os.path.join(output_dir, "summary.txt"), "w", encoding="utf-8") as f:
+        with open(os.path.join(output_dir, f"{prefix}summary.txt"), "w", encoding="utf-8") as f:
             f.write(full_summary)
         
         # 保存核心观点
-        with open(os.path.join(output_dir, "core_points.txt"), "w", encoding="utf-8") as f:
+        with open(os.path.join(output_dir, f"{prefix}core_points.txt"), "w", encoding="utf-8") as f:
             for point in consolidated_points:
                 f.write(f"{point}\n")
                 f.write("-" * 50 + "\n")
         
         # 保存详细分析
-        with open(os.path.join(output_dir, "detailed_points.txt"), "w", encoding="utf-8") as f:
+        with open(os.path.join(output_dir, f"{prefix}detailed_points.txt"), "w", encoding="utf-8") as f:
             for point, analysis in detailed_points.items():
                 f.write(f"核心观点：{point}\n")
                 f.write("详细分析：\n")
@@ -567,7 +571,7 @@ class ArticleAnalyzer:
                 f.write("\n\n" + "=" * 50 + "\n\n")
         
         # 保存完整内容到单个文件
-        with open(os.path.join(output_dir, "complete_analysis.txt"), "w", encoding="utf-8") as f:
+        with open(os.path.join(output_dir, f"{prefix}complete_analysis.txt"), "w", encoding="utf-8") as f:
             f.write(f"标题：{title}\n\n")
             f.write("文章信息摘要：\n")
             f.write(f"{brief}\n\n")
@@ -590,46 +594,63 @@ class ArticleAnalyzer:
 # 使用示例
 def main():
     openai_api_key = "sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4"
-    base_url = "https://www.gptapi.us/v1"  # 可选
+    base_url = "https://api.gptapi.us/v1"  # 可选
     analyzer = ArticleAnalyzer(
         openai_api_key,
-        model="claude-3-5-sonnet",
+        model="deepseek-v3",
         temperature=0.5,
         base_url=base_url
     )
     
-    # 从文件读取文章内容
-    file_path = "article.txt"  # 指定文件路径
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            article = file.read()
-    except FileNotFoundError:
-        print(f"错误：找不到文件 '{file_path}'")
-        return
-    except Exception as e:
-        print(f"读取文件时发生错误：{str(e)}")
+    # 获取文件夹路径
+    folder_path = input("请输入txt文件所在文件夹路径: ").strip()
+    if not os.path.exists(folder_path):
+        print(f"错误：找不到文件夹 '{folder_path}'")
         return
     
-    if not article.strip():
-        print("错误：文件内容为空")
+    # 获取文件夹中所有的txt文件
+    txt_files = [f for f in os.listdir(folder_path) if f.endswith('.txt')]
+    if not txt_files:
+        print(f"错误：在文件夹 '{folder_path}' 中没有找到txt文件")
         return
     
-    result = analyzer.analyze_article(article)
-    
-    if result is None:
-        print("Analysis skipped due to article length.")
-        return
-    
-    # 打印结果
-    print("文章摘要:", result['summary'])
-    print("\n核心观点:")
-    for point in result['core_points']:
-        print(f"- {point}")
-    
-    print("\n详细分析:")
-    for point, analysis in result['detailed_points'].items():
-        print(f"\n核心观点: {point}")
-        print(f"详细分析: {analysis}")
+    # 处理每个txt文件
+    for file_name in txt_files:
+        file_path = os.path.join(folder_path, file_name)
+        print(f"\n正在处理文件: {file_name}")
+        print("-" * 50)
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                article = file.read()
+        except Exception as e:
+            print(f"读取文件 '{file_name}' 时发生错误：{str(e)}")
+            continue
+        
+        if not article.strip():
+            print(f"跳过空文件: {file_name}")
+            continue
+        
+        # 获取文件名（不含扩展名）作为前缀
+        file_prefix = os.path.splitext(file_name)[0]
+        result = analyzer.analyze_article(article, file_prefix)
+        
+        if result is None:
+            print(f"由于文章长度问题跳过分析: {file_name}")
+            continue
+        
+        # 打印结果
+        print("\n文章摘要:", result['summary'])
+        print("\n核心观点:")
+        for point in result['core_points']:
+            print(f"- {point}")
+        
+        print("\n详细分析:")
+        for point, analysis in result['detailed_points'].items():
+            print(f"\n核心观点: {point}")
+            print(f"详细分析: {analysis}")
+        
+        print("\n" + "="*50 + "\n")  # 添加分隔线
 
 if __name__ == "__main__":
     main()
