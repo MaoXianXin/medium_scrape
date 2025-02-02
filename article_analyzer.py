@@ -491,7 +491,7 @@ class ArticleAnalyzer:
             print("JSON 解析失败:", str(e))
             return []
 
-    def analyze_article(self, article, file_prefix=""):
+    def analyze_article(self, article, file_prefix="", output_dir="analysis_results"):
         """
         Complete article analysis workflow
         
@@ -546,9 +546,6 @@ class ArticleAnalyzer:
         title, brief = self.generate_title_and_brief(detailed_points)
         
         # 7. 保存结果到文件
-        output_dir = "analysis_results"
-        os.makedirs(output_dir, exist_ok=True)
-        
         # 添加文件前缀
         prefix = f"{file_prefix}_" if file_prefix else ""
         
@@ -614,9 +611,21 @@ def main():
         print(f"错误：在文件夹 '{folder_path}' 中没有找到txt文件")
         return
     
+    # 检查分析结果目录
+    output_dir = "analysis_results"
+    os.makedirs(output_dir, exist_ok=True)
+    
     # 处理每个txt文件
     for file_name in txt_files:
         file_path = os.path.join(folder_path, file_name)
+        file_prefix = os.path.splitext(file_name)[0]
+        
+        # 检查是否已经分析过
+        complete_analysis_file = os.path.join(output_dir, f"{file_prefix}_complete_analysis.txt")
+        if os.path.exists(complete_analysis_file):
+            print(f"\n文件 {file_name} 已经分析过，跳过处理")
+            continue
+            
         print(f"\n正在处理文件: {file_name}")
         print("-" * 50)
         
@@ -631,9 +640,7 @@ def main():
             print(f"跳过空文件: {file_name}")
             continue
         
-        # 获取文件名（不含扩展名）作为前缀
-        file_prefix = os.path.splitext(file_name)[0]
-        result = analyzer.analyze_article(article, file_prefix)
+        result = analyzer.analyze_article(article, file_prefix, output_dir)
         
         if result is None:
             print(f"由于文章长度问题跳过分析: {file_name}")
