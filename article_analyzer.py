@@ -387,7 +387,7 @@ class ArticleAnalyzer:
         Returns:
             list: List of article segments
         """
-        tokens = self.tokenizer.encode(article)
+        tokens = self.tokenizer.encode(article, disallowed_special=())
         segments = []
         current_segment_tokens = []
         current_length = 0
@@ -508,7 +508,7 @@ class ArticleAnalyzer:
                 - detailed_points (dict): Detailed analysis for each core point
         """
         # Check token count
-        tokens = self.tokenizer.encode(article)
+        tokens = self.tokenizer.encode(article, disallowed_special=())
         token_count = len(tokens)
         print(f"Article token count: {token_count}")
         
