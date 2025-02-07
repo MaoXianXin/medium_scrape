@@ -1,107 +1,113 @@
 """
-flowchart TD
-    A[用户提供Goal] --> B[LLM接收Goal]
-    B --> C[进入处理循环]
-    C --> D[从外界获取Input]
-    D --> E1{Input是exit?}
-    E1 -- 是 --> J[结束循环并显示记忆]
-    E1 -- 否 --> E2{Input与Goal相关?}
-    E2 -- 否 --> C
-    E2 -- 是 --> F[LLM结合Memory、Goal处理Input]
-    F --> G[生成新Memory草案]
-    G --> H{用户确认更新?}
-    H -- 否 --> C
-    H -- 是 --> I[更新Memory]
-    I --> C
+文档的处理流程为: 文档加载->文档分割->嵌入->向量存储->检索
 """
 
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings
+from langchain_core.vectorstores import InMemoryVectorStore
+import os
 
-
-class CognitiveArchitecture:
-    def __init__(self):
-        self.llm = ChatOpenAI(model="deepseek-r1", temperature=0.7, base_url="https://api.gptapi.us/v1", api_key="sk-HuCbzLcW9t2VOc1t49693cFfF5C74f9bB72d179784380cB4")
-        self.memory_file = "memory.txt"
-        self.current_goal = None
+class DocumentProcessor:
+    def __init__(self, openai_api_key, base_url=None):
+        # 初始化配置
+        os.environ["OPENAI_API_KEY"] = openai_api_key
         
-        # 初始化时创建或清空记忆文件
-        with open(self.memory_file, "w", encoding="utf-8") as f:
-            f.write("")
-
-    def _load_memory(self):
-        """从文件加载记忆"""
-        with open(self.memory_file, "r", encoding="utf-8") as f:
-            return f.read()
-
-    def _save_memory(self, content):
-        """保存记忆到文件"""
-        with open(self.memory_file, "a", encoding="utf-8") as f:
-            f.write(f"\n{content}")
-
-    def _get_relevance_judgment(self, input_text):
-        """判断输入相关性"""
-        prompt = ChatPromptTemplate.from_template(
-            "当前目标：{goal}\n输入内容：{input}\n请判断该输入是否与目标相关？只需回答'是'或'否'"
+        # 初始化各个组件
+        self.embeddings = OpenAIEmbeddings(
+            model="text-embedding-3-large",
+            base_url=base_url if base_url else "https://api.openai.com/v1"
         )
-        chain = prompt | self.llm
-        response = chain.invoke({
-            "goal": self.current_goal,
-            "input": input_text
-        })
-        return "是" in response.content
-    
-    def _generate_memory_draft(self, input_text):
-        """生成记忆草案"""
-        prompt = ChatPromptTemplate.from_template(
-            "基于当前目标'{goal}'，整合以下信息生成直接支持该目标的记忆要点：\n"
-            "历史记忆：{memory}\n"
-            "新输入：{input}\n"
-            "要求：每个记忆要点必须明确说明与目标的关系"
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,  # 每个文本块最大1000个字符
+            chunk_overlap=200,
+            add_start_index=True
         )
-        chain = prompt | self.llm
-        return chain.invoke({
-            "goal": self.current_goal,
-            "memory": self._load_memory(),
-            "input": input_text
-        }).content
+        self.vector_store = InMemoryVectorStore(self.embeddings)
+        
+    def load_document(self, file_path):
+        """加载文档"""
+        loader = PyPDFLoader(file_path)
+        return loader.load()
+        
+    def split_documents(self, documents):
+        """分割文档"""
+        return self.text_splitter.split_documents(documents)
+        
+    def add_to_vectorstore(self, documents):
+        """将文档添加到向量存储"""
+        return self.vector_store.add_documents(documents=documents)
+        
+    def similarity_search(self, query, k=4):
+        """相似度搜索"""
+        return self.vector_store.similarity_search(query, k=k)
+        
+    def mmr_search(self, query, k=4, fetch_k=20):
+        """最大边际相关性搜索"""
+        return self.vector_store.max_marginal_relevance_search(
+            query,
+            k=k,
+            fetch_k=fetch_k
+        )
+        
+    def similarity_score_threshold_search(self, query, score_threshold=0.8):
+        """相似度阈值搜索"""
+        results = self.vector_store.similarity_search_with_score(query)
+        return [doc for doc, score in results if score >= score_threshold]
+
+    def process_document(self, file_path):
+        """完整的文档处理流程"""
+        # 1. 加载文档
+        docs = self.load_document(file_path)
+        
+        # 2. 分割文档
+        splits = self.split_documents(docs)
+        
+        # 3. 添加到向量存储
+        self.add_to_vectorstore(splits)
+        
+        return "Document processed successfully"
+
+# 使用示例
+def main():
+    # 初始化处理器（添加可选的 base_url 参数）
+    processor = DocumentProcessor(
+        "sk-jsbIUYq1MwwUheWDDeB01c1a7a2246E3956b6b75762c9f21",
+        base_url="https://api.gptapi.us/v1"  # 可选参数
+    )
     
-    def _get_user_confirmation(self, draft):
-        """获取用户确认"""
-        print(f"\n建议更新的记忆内容：\n{draft}")
-        return input("是否更新记忆？(y/n): ").lower() == 'y'
+    # 处理文档
+    file_path = "/home/mao/Downloads/LangChain.pdf"
+    print("开始处理文档...")
+    result = processor.process_document(file_path)
+    print(result)
     
-    def run_cycle(self):
-        """主处理循环"""
-        while True:
-            # 模拟从外部获取输入
-            input_text = input("\n请输入新信息（输入'exit'退出）: ")
-            
-            if input_text.lower() == 'exit':
-                break
-                
-            if not self._get_relevance_judgment(input_text):
-                print("→ 输入内容与目标无关，已跳过")
-                continue
-                
-            memory_draft = self._generate_memory_draft(input_text)
-            
-            if self._get_user_confirmation(memory_draft):
-                self._save_memory(memory_draft)
-                print("✓ 记忆已更新")
-            else:
-                print("× 记忆更新已取消")
+    # 执行搜索
+    query = "What is this document about?"
+    print("\n执行搜索查询:", query)
+    
+    # 相似度搜索
+    print("\n1. 相似度搜索结果:")
+    similar_docs = processor.similarity_search(query)
+    for i, doc in enumerate(similar_docs, 1):
+        print(f"\n文档 {i}:")
+        print(doc.page_content[:200] + "...")  # 只打印前200个字符
+    
+    # MMR搜索
+    print("\n2. MMR搜索结果:")
+    mmr_docs = processor.mmr_search(query)
+    for i, doc in enumerate(mmr_docs, 1):
+        print(f"\n文档 {i}:")
+        print(doc.page_content[:200] + "...")
+    
+    # 阈值搜索
+    print("\n3. 阈值搜索结果:")
+    threshold_docs = processor.similarity_score_threshold_search(query)
+    for i, doc in enumerate(threshold_docs, 1):
+        print(f"\n文档 {i}:")
+        print(doc.page_content[:200] + "...")
+    
+    return similar_docs, mmr_docs, threshold_docs
 
-# 初始化系统
-cognitive_system = CognitiveArchitecture()
-
-# 设置初始目标
-cognitive_system.current_goal = input("请输入初始目标：")
-
-# 启动处理循环
-cognitive_system.run_cycle()
-
-# 查看最终记忆
-print("\n最终记忆内容：")
-with open(cognitive_system.memory_file, "r", encoding="utf-8") as f:
-    print(f.read())
+if __name__ == "__main__":
+    main()
