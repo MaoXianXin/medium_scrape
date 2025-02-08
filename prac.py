@@ -1,5 +1,5 @@
 """
-文档的处理流程为: 文档加载->文档分割->嵌入->向量存储->检索
+文档的处理流程为: 文档加载->文档分割->嵌入->向量存储->检索->问答
 
 graph TD
     A[文档处理开始] --> B[初始化 DocumentProcessor]
@@ -10,6 +10,7 @@ graph TD
     D -->|1| E[OpenAIEmbeddings<br>model: text-embedding-3-large<br>base_url: 可选]
     D -->|2| F[RecursiveCharacterTextSplitter<br>chunk_size: 1000<br>chunk_overlap: 200<br>add_start_index: true]
     D -->|3| G[InMemoryVectorStore]
+    D -->|4| Q[ChatOpenAI<br>model: claude-3-5-sonnet<br>temperature: 0<br>base_url: 可选]
     E --> G
     end
     
@@ -28,17 +29,19 @@ graph TD
     O --> P
     end
 
+    subgraph 问答功能
+    R[问答流程] --> S[用户查询]
+    S --> M
+    P --> T[合并文档内容]
+    T --> U[构建系统提示词]
+    U --> V[生成回答<br>ChatOpenAI.invoke]
+    Q --> V
+    end
+
     %% 添加子图之间的关系
-    %% 初始化阶段 -> 文档处理流程
     F --> J
     G --> K
     
-    %% 文档处理流程 -> 搜索功能
-    K --> M
-    K --> N
-    K --> O
-    
-    %% 初始化阶段 -> 搜索功能
     E -.->|查询向量化| M
     E -.->|查询向量化| N
     E -.->|查询向量化| O
@@ -49,11 +52,13 @@ graph TD
     %% 添加流程顺序
     初始化阶段 --> 文档处理流程
     文档处理流程 --> 搜索功能
+    搜索功能 --> 问答功能
 
     %% 添加说明
     style 初始化阶段 fill:#f9f,stroke:#333,stroke-width:2px
     style 文档处理流程 fill:#bbf,stroke:#333,stroke-width:2px
     style 搜索功能 fill:#bfb,stroke:#333,stroke-width:2px
+    style 问答功能 fill:#fbb,stroke:#333,stroke-width:2px
 """
 
 from langchain_community.document_loaders import PyPDFLoader
@@ -80,6 +85,12 @@ class DocumentProcessor:
             add_start_index=True
         )
         self.vector_store = InMemoryVectorStore(self.embeddings)
+        self.llm = ChatOpenAI(
+            model="claude-3-5-sonnet",
+            temperature=0,
+            openai_api_key=openai_api_key,
+            base_url=base_url if base_url else "https://api.openai.com/v1"
+        )
         
     def load_document(self, file_path):
         """加载文档"""
@@ -138,21 +149,6 @@ def main():
     result = processor.process_document(file_path)
     print(result)
     
-    # 初始化 ChatOpenAI
-    llm = ChatOpenAI(
-        model="claude-3-5-sonnet",
-        temperature=0,
-        openai_api_key=os.environ["OPENAI_API_KEY"],
-        base_url="https://api.gptapi.us/v1"
-    )
-    
-    # 定义系统提示词
-    system_prompt = """You are an assistant for question-answering tasks. 
-    Use the following pieces of retrieved context to answer the question. 
-    If you don't know the answer, just say that you don't know. 
-    Use three sentences maximum and keep the answer concise.
-    Context: {context}"""
-    
     # 用户查询
     query = "What is LangSmith?"
     print("\n用户查询:", query)
@@ -163,7 +159,13 @@ def main():
     # 将检索到的文档合并为文本
     docs_text = "\n".join(doc.page_content for doc in similar_docs)
     
-    # 格式化系统提示词
+    # 定义系统提示词
+    system_prompt = """You are an assistant for question-answering tasks. 
+    Use the following pieces of retrieved context to answer the question. 
+    If you don't know the answer, just say that you don't know. 
+    Use three sentences maximum and keep the answer concise.
+    Context: {context}"""
+    
     system_prompt_fmt = system_prompt.format(context=docs_text)
     
     # 生成回答
@@ -171,7 +173,7 @@ def main():
         SystemMessage(content=system_prompt_fmt),
         HumanMessage(content=query)
     ]
-    response = llm.invoke(messages)
+    response = processor.llm.invoke(messages)
     
     print("\n检索到的相关文档:")
     for i, doc in enumerate(similar_docs, 1):
