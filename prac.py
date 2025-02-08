@@ -1,5 +1,59 @@
 """
 文档的处理流程为: 文档加载->文档分割->嵌入->向量存储->检索
+
+graph TD
+    A[文档处理开始] --> B[初始化 DocumentProcessor]
+    
+    subgraph 初始化阶段
+    B --> C[设置 OpenAI API Key]
+    B --> D[初始化组件]
+    D -->|1| E[OpenAIEmbeddings<br>model: text-embedding-3-large<br>base_url: 可选]
+    D -->|2| F[RecursiveCharacterTextSplitter<br>chunk_size: 1000<br>chunk_overlap: 200<br>add_start_index: true]
+    D -->|3| G[InMemoryVectorStore]
+    E --> G
+    end
+    
+    subgraph 文档处理流程
+    H[process_document方法] --> I[加载文档<br>load_document]
+    I --> J[文档分割<br>split_documents]
+    J --> K[添加到向量存储<br>add_to_vectorstore]
+    end
+    
+    subgraph 搜索功能
+    L[搜索方法] --> M[相似度搜索<br>similarity_search<br>参数: k=4]
+    L --> N[MMR搜索<br>mmr_search<br>参数: k=4, fetch_k=20]
+    L --> O[相似度阈值搜索<br>similarity_score_threshold_search<br>参数: score_threshold=0.8]
+    M --> P[返回相关文档]
+    N --> P
+    O --> P
+    end
+
+    %% 添加子图之间的关系
+    %% 初始化阶段 -> 文档处理流程
+    F --> J
+    G --> K
+    
+    %% 文档处理流程 -> 搜索功能
+    K --> M
+    K --> N
+    K --> O
+    
+    %% 初始化阶段 -> 搜索功能
+    E -.->|查询向量化| M
+    E -.->|查询向量化| N
+    E -.->|查询向量化| O
+    G -.->|向量存储检索| M
+    G -.->|向量存储检索| N
+    G -.->|向量存储检索| O
+
+    %% 添加流程顺序
+    初始化阶段 --> 文档处理流程
+    文档处理流程 --> 搜索功能
+
+    %% 添加说明
+    style 初始化阶段 fill:#f9f,stroke:#333,stroke-width:2px
+    style 文档处理流程 fill:#bbf,stroke:#333,stroke-width:2px
+    style 搜索功能 fill:#bfb,stroke:#333,stroke-width:2px
 """
 
 from langchain_community.document_loaders import PyPDFLoader
