@@ -61,6 +61,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.vectorstores import InMemoryVectorStore
 import os
+from langchain_openai.chat_models import ChatOpenAI
+from langchain.schema import SystemMessage, HumanMessage
 
 class DocumentProcessor:
     def __init__(self, openai_api_key, base_url=None):
@@ -136,32 +138,48 @@ def main():
     result = processor.process_document(file_path)
     print(result)
     
-    # 执行搜索
-    query = "What is this document about?"
-    print("\n执行搜索查询:", query)
+    # 初始化 ChatOpenAI
+    llm = ChatOpenAI(
+        model="claude-3-5-sonnet",
+        temperature=0,
+        openai_api_key=os.environ["OPENAI_API_KEY"],
+        base_url="https://api.gptapi.us/v1"
+    )
     
-    # 相似度搜索
-    print("\n1. 相似度搜索结果:")
+    # 定义系统提示词
+    system_prompt = """You are an assistant for question-answering tasks. 
+    Use the following pieces of retrieved context to answer the question. 
+    If you don't know the answer, just say that you don't know. 
+    Use three sentences maximum and keep the answer concise.
+    Context: {context}"""
+    
+    # 用户查询
+    query = "What is LangSmith?"
+    print("\n用户查询:", query)
+    
+    # 相似度搜索获取相关文档
     similar_docs = processor.similarity_search(query)
+    
+    # 将检索到的文档合并为文本
+    docs_text = "\n".join(doc.page_content for doc in similar_docs)
+    
+    # 格式化系统提示词
+    system_prompt_fmt = system_prompt.format(context=docs_text)
+    
+    # 生成回答
+    messages = [
+        SystemMessage(content=system_prompt_fmt),
+        HumanMessage(content=query)
+    ]
+    response = llm.invoke(messages)
+    
+    print("\n检索到的相关文档:")
     for i, doc in enumerate(similar_docs, 1):
         print(f"\n文档 {i}:")
-        print(doc.page_content[:200] + "...")  # 只打印前200个字符
-    
-    # MMR搜索
-    print("\n2. MMR搜索结果:")
-    mmr_docs = processor.mmr_search(query)
-    for i, doc in enumerate(mmr_docs, 1):
-        print(f"\n文档 {i}:")
         print(doc.page_content[:200] + "...")
     
-    # 阈值搜索
-    print("\n3. 阈值搜索结果:")
-    threshold_docs = processor.similarity_score_threshold_search(query)
-    for i, doc in enumerate(threshold_docs, 1):
-        print(f"\n文档 {i}:")
-        print(doc.page_content[:200] + "...")
-    
-    return similar_docs, mmr_docs, threshold_docs
+    print("\nAI 回答:")
+    print(response.content)
 
 if __name__ == "__main__":
     main()
