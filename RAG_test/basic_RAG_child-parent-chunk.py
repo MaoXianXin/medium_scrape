@@ -135,10 +135,10 @@ class DocumentProcessor:
             children = self.child_splitter.split_documents([parent])
             
             # 为子块添加父块引用
-            for child in children:
+            for i, child in enumerate(children):
                 child_hash = self.get_content_hash(child.page_content)
                 child.metadata['parent_id'] = parent.metadata['chunk_id']
-                child.metadata['chunk_id'] = f'child_{child_hash}'
+                child.metadata['chunk_id'] = f'child_{child_hash}_{i}'
                 all_children.append(child)
             
             # 记录父块到子块的映射
