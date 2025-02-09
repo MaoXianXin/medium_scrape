@@ -92,7 +92,7 @@ class DocumentProcessor:
         )
         self.vector_store = InMemoryVectorStore(self.embeddings)
         self.llm = ChatOpenAI(
-            model="claude-3-5-sonnet",
+            model="claude-3-5-sonnet-20240620",
             temperature=0,
             openai_api_key=openai_api_key,
             base_url=base_url if base_url else "https://api.openai.com/v1"
@@ -101,7 +101,12 @@ class DocumentProcessor:
     def load_document(self, file_path):
         """加载文档"""
         loader = PyPDFLoader(file_path)
-        return loader.load()
+        docs = loader.load()
+        # 添加源文件信息
+        for doc in docs:
+            doc.metadata['source'] = file_path
+            doc.metadata['page'] = doc.metadata.get('page', 1)
+        return docs
         
     @staticmethod
     def get_content_hash(text):
@@ -153,25 +158,76 @@ class DocumentProcessor:
                     return parent
         return child_doc
 
+    def get_formatted_source_info(self, doc):
+        """获取格式化的源文件信息"""
+        source = doc.metadata.get('source', 'Unknown source')
+        page = doc.metadata.get('page', 'Unknown page')
+        chunk_id = doc.metadata.get('chunk_id', 'Unknown chunk')
+        return {
+            'source': source,
+            'page': page,
+            'chunk_id': chunk_id
+        }
+
     def similarity_search(self, query, k=4):
-        """相似度搜索，返回父块"""
+        """相似度搜索，返回父块及其源信息"""
         child_results = self.vector_store.similarity_search(query, k=k)
-        return [self.get_parent_chunk(doc) for doc in child_results]
+        # 使用集合来跟踪已经添加的父块ID
+        seen_parent_ids = set()
+        results = []
+        for doc in child_results:
+            parent_doc = self.get_parent_chunk(doc)
+            parent_id = parent_doc.metadata['chunk_id']
+            # 只有当父块ID未被处理过时才添加到结果中
+            if parent_id not in seen_parent_ids:
+                seen_parent_ids.add(parent_id)
+                results.append({
+                    'document': parent_doc,
+                    'source_info': self.get_formatted_source_info(parent_doc)
+                })
+        return results
         
     def mmr_search(self, query, k=4, fetch_k=20):
-        """最大边际相关性搜索，返回父块"""
+        """最大边际相关性搜索，返回父块及其源信息"""
         child_results = self.vector_store.max_marginal_relevance_search(
             query,
             k=k,
             fetch_k=fetch_k
         )
-        return [self.get_parent_chunk(doc) for doc in child_results]
+        # 使用集合来跟踪已经添加的父块ID
+        seen_parent_ids = set()
+        results = []
+        for doc in child_results:
+            parent_doc = self.get_parent_chunk(doc)
+            parent_id = parent_doc.metadata['chunk_id']
+            # 只有当父块ID未被处理过时才添加到结果中
+            if parent_id not in seen_parent_ids:
+                seen_parent_ids.add(parent_id)
+                results.append({
+                    'document': parent_doc,
+                    'source_info': self.get_formatted_source_info(parent_doc)
+                })
+        return results
         
     def similarity_score_threshold_search(self, query, score_threshold=0.8):
-        """相似度阈值搜索，返回父块"""
+        """相似度阈值搜索，返回父块及其源信息"""
         results = self.vector_store.similarity_search_with_score(query)
-        filtered_children = [doc for doc, score in results if score >= score_threshold]
-        return [self.get_parent_chunk(doc) for doc in filtered_children]
+        # 使用集合来跟踪已经添加的父块ID
+        seen_parent_ids = set()
+        filtered_results = []
+        for doc, score in results:
+            if score >= score_threshold:
+                parent_doc = self.get_parent_chunk(doc)
+                parent_id = parent_doc.metadata['chunk_id']
+                # 只有当父块ID未被处理过时才添加到结果中
+                if parent_id not in seen_parent_ids:
+                    seen_parent_ids.add(parent_id)
+                    filtered_results.append({
+                        'document': parent_doc,
+                        'source_info': self.get_formatted_source_info(parent_doc),
+                        'score': score
+                    })
+        return filtered_results
 
     def process_document(self, file_path):
         """完整的文档处理流程"""
@@ -190,12 +246,12 @@ class DocumentProcessor:
 def main():
     # 初始化处理器（添加可选的 base_url 参数）
     processor = DocumentProcessor(
-        "sk-jsbIUYq1MwwUheWDDeB01c1a7a2246E3956b6b75762c9f21",
-        base_url="https://api.gptapi.us/v1"  # 可选参数
+        "sk-noerGmiAt3J8SQdnj1UI74K4ixZhB55OUuEp6rfa85BOjVcI",
+        base_url="https://zzzzapi.com/v1"  # 可选参数
     )
     
     # 处理文档
-    file_path = "/home/mao/Downloads/LangChain.pdf"
+    file_path = "/home/mao/Downloads/Introduction _ 🦜️🔗 LangChain.pdf"
     print("开始处理文档...")
     result = processor.process_document(file_path)
     print(result)
@@ -208,7 +264,7 @@ def main():
     similar_docs = processor.similarity_search(query)
     
     # 将检索到的文档合并为文本
-    docs_text = "\n".join(doc.page_content for doc in similar_docs)
+    docs_text = "\n".join(doc['document'].page_content for doc in similar_docs)
     
     # 定义系统提示词
     system_prompt = """You are an assistant for question-answering tasks. 
@@ -229,7 +285,8 @@ def main():
     print("\n检索到的相关文档:")
     for i, doc in enumerate(similar_docs, 1):
         print(f"\n文档 {i}:")
-        print(doc.page_content[:200] + "...")
+        print(f"Source: {doc['source_info']['source']}, Page: {doc['source_info']['page']}, Chunk ID: {doc['source_info']['chunk_id']}")
+        print(doc['document'].page_content[:200] + "...")
     
     print("\nAI 回答:")
     print(response.content)
