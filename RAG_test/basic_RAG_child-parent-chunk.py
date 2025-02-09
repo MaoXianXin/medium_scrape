@@ -105,7 +105,7 @@ class DocumentProcessor:
         # 添加源文件信息
         for doc in docs:
             doc.metadata['source'] = file_path
-            doc.metadata['page'] = doc.metadata.get('page', 1)
+            doc.metadata['page'] = doc.metadata.get('page', 0)
         return docs
         
     @staticmethod
