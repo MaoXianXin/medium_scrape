@@ -49,7 +49,7 @@ graph TD
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
-from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_chroma import Chroma
 import os
 import hashlib
 
@@ -60,7 +60,7 @@ class DocumentPipeline:
         
         # 初始化嵌入模型
         self.embeddings = OpenAIEmbeddings(
-            model="text-embedding-3-large",
+            model="text-embedding-3-small",
             base_url=base_url if base_url else "https://api.openai.com/v1"
         )
         
@@ -77,7 +77,11 @@ class DocumentPipeline:
         )
         
         # 初始化向量存储
-        self.vector_store = InMemoryVectorStore(self.embeddings)
+        self.vector_store = Chroma(
+            embedding_function=self.embeddings,
+            persist_directory="./chroma_db",  # 指定存储目录
+            collection_name="my_collection"    # 可选：指定集合名称
+        )
         
         # 存储文档块的引用
         self.parent_chunks = []
@@ -135,7 +139,7 @@ class DocumentPipeline:
         splits = self.split_documents(docs)
         
         # 3. 添加到向量存储
-        self.vector_store.add_documents(documents=splits)
+        self.vector_store.add_documents(documents=splits, ids=[doc.metadata['chunk_id'] for doc in splits])
         
         return {
             "status": "success",

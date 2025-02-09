@@ -64,7 +64,7 @@ graph TD
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
-from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_chroma import Chroma
 import os
 from langchain_openai.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage
@@ -76,7 +76,7 @@ class DocumentProcessor:
         
         # 初始化各个组件
         self.embeddings = OpenAIEmbeddings(
-            model="text-embedding-3-large",
+            model="text-embedding-3-small",
             base_url=base_url if base_url else "https://api.openai.com/v1"
         )
         # 添加父块分割器
@@ -90,7 +90,11 @@ class DocumentProcessor:
             chunk_overlap=20,
             add_start_index=True
         )
-        self.vector_store = InMemoryVectorStore(self.embeddings)
+        self.vector_store = Chroma(
+            embedding_function=self.embeddings,
+            persist_directory="./chroma_db",  # 指定存储目录
+            collection_name="my_collection"    # 可选：指定集合名称
+        )
         self.llm = ChatOpenAI(
             model="claude-3-5-sonnet-20240620",
             temperature=0,
@@ -147,7 +151,7 @@ class DocumentProcessor:
         
     def add_to_vectorstore(self, documents):
         """将子块添加到向量存储"""
-        return self.vector_store.add_documents(documents=documents)
+        return self.vector_store.add_documents(documents=documents, ids=[doc.metadata['chunk_id'] for doc in documents])
 
     def get_parent_chunk(self, child_doc):
         """根据子块获取对应的父块"""
