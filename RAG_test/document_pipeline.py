@@ -147,6 +147,44 @@ class DocumentPipeline:
             "child_chunks_count": len(splits)
         }
 
+    def get_collection_stats(self) -> dict:
+        """获取向量数据库集合的统计信息
+        
+        Returns:
+            dict: 包含以下统计信息:
+                - total_documents: 文档总数
+                - unique_sources: 不同源文件数量及清单
+        """
+        # 获取所有文档
+        results = self.vector_store.get()
+        
+        # 统计总文档数
+        total_docs = len(results["ids"]) if "ids" in results else 0
+        
+        # 统计不同源文件
+        unique_sources = set()
+        if "metadatas" in results:
+            for metadata in results["metadatas"]:
+                if metadata and "source" in metadata:
+                    unique_sources.add(metadata["source"])
+        
+        return {
+            "total_documents": total_docs,
+            "unique_sources": {
+                "count": len(unique_sources),
+                "sources": list(unique_sources)
+            }
+        }
+    
+    def reset_collection(self):
+        """清空向量数据库集合并重置状态"""
+        # 重置向量存储
+        self.vector_store.reset_collection()
+        
+        # 重置内部状态
+        self.parent_chunks = []
+        self.parent_to_children = {}
+
 # 使用示例
 def main():
     pipeline = DocumentPipeline(
@@ -154,6 +192,15 @@ def main():
         base_url="https://zzzzapi.com/v1"  # 可选
     )
     
+    # 获取统计信息
+    stats = pipeline.get_collection_stats()
+    print(f"文档总数: {stats['total_documents']}")
+    print(f"源文件数量: {stats['unique_sources']['count']}")
+    print(f"源文件列表: {stats['unique_sources']['sources']}")
+
+    # 重置集合
+    # pipeline.reset_collection()
+
     result = pipeline.process_document("/home/mao/Downloads/Introduction _ 🦜️🔗 LangChain.pdf")
     print(f"文档处理完成：{result}")
 
