@@ -208,73 +208,65 @@ class DocumentProcessor:
             'chunk_id': chunk_id
         }
 
+    def _get_parent_document_info(self, parent_id):
+        """Helper method to get parent document info from parent_id"""
+        parent_docs = self.vector_store_parents.get(
+            ids=[parent_id],
+            include=["documents", "metadatas"]
+        )
+        
+        if parent_docs and parent_docs['documents']:
+            parent_doc = Document(
+                page_content=parent_docs['documents'][0],
+                metadata=parent_docs['metadatas'][0]
+            )
+            return {
+                'document': parent_doc,
+                'source_info': self.get_formatted_source_info(parent_doc)
+            }
+        return None
+
     def similarity_search(self, query, k=4):
         """使用子块进行相似度搜索，返回父块及其源信息"""
-        # 首先在子块集合中搜索
         child_results = self.vector_store_children.similarity_search(query, k=k)
         
-        # 获取相关父块的ID
-        parent_ids = [doc.metadata['parent_id'] for doc in child_results]
-        
-        # 使用集合来跟踪已经添加的父块ID
         seen_parent_ids = set()
         results = []
-        for parent_id in parent_ids:
+        
+        for doc in child_results:
+            parent_id = doc.metadata['parent_id']
             if parent_id not in seen_parent_ids:
                 seen_parent_ids.add(parent_id)
-                # 使用父块ID从父块集合中检索文档
-                parent_docs = self.vector_store_parents.get(
-                    ids=[parent_id],
-                    include=["documents", "metadatas"]
-                )
-                
-                if parent_docs and parent_docs['documents']:
-                    parent_doc = Document(
-                        page_content=parent_docs['documents'][0],
-                        metadata=parent_docs['metadatas'][0]
-                    )
-                    results.append({
-                        'document': parent_doc,
-                        'source_info': self.get_formatted_source_info(parent_doc)
-                    })
+                parent_info = self._get_parent_document_info(parent_id)
+                if parent_info:
+                    results.append(parent_info)
         
         return results
 
     def mmr_search(self, query, k=4, fetch_k=20):
-        """最大边际相关性搜索，返回父块及其源信息"""
+        """使用子块进行最大边际相关性搜索，返回父块及其源信息"""
         child_results = self.vector_store_children.max_marginal_relevance_search(
             query,
             k=k,
             fetch_k=fetch_k
         )
-        # 使用集合来跟踪已经添加的父块ID
+        
         seen_parent_ids = set()
         results = []
+        
         for doc in child_results:
             parent_id = doc.metadata['parent_id']
             if parent_id not in seen_parent_ids:
                 seen_parent_ids.add(parent_id)
-                # 使用父块ID从父块集合中检索文档
-                parent_docs = self.vector_store_parents.get(
-                    ids=[parent_id],
-                    include=["documents", "metadatas"]
-                )
-                
-                if parent_docs and parent_docs['documents']:
-                    parent_doc = Document(
-                        page_content=parent_docs['documents'][0],
-                        metadata=parent_docs['metadatas'][0]
-                    )
-                    results.append({
-                        'document': parent_doc,
-                        'source_info': self.get_formatted_source_info(parent_doc)
-                    })
+                parent_info = self._get_parent_document_info(parent_id)
+                if parent_info:
+                    results.append(parent_info)
+                    
         return results
         
     def similarity_score_threshold_search(self, query, score_threshold=0.8):
-        """相似度阈值搜索，返回父块及其源信息"""
+        """使用子块进行相似度阈值搜索，返回父块及其源信息"""
         results = self.vector_store_children.similarity_search_with_score(query)
-        # 使用集合来跟踪已经添加的父块ID
         seen_parent_ids = set()
         filtered_results = []
         
@@ -283,22 +275,11 @@ class DocumentProcessor:
                 parent_id = doc.metadata['parent_id']
                 if parent_id not in seen_parent_ids:
                     seen_parent_ids.add(parent_id)
-                    # 使用父块ID从父块集合中检索文档
-                    parent_docs = self.vector_store_parents.get(
-                        ids=[parent_id],
-                        include=["documents", "metadatas"]
-                    )
-                    
-                    if parent_docs and parent_docs['documents']:
-                        parent_doc = Document(
-                            page_content=parent_docs['documents'][0],
-                            metadata=parent_docs['metadatas'][0]
-                        )
-                        filtered_results.append({
-                            'document': parent_doc,
-                            'source_info': self.get_formatted_source_info(parent_doc),
-                            'score': score
-                        })
+                    parent_info = self._get_parent_document_info(parent_id)
+                    if parent_info:
+                        parent_info['score'] = score  # 添加相似度分数
+                        filtered_results.append(parent_info)
+        
         return filtered_results
 
     def process_document(self, file_path):
