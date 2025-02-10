@@ -183,18 +183,6 @@ class DocumentProcessor:
             print(f"Error adding documents to vector store: {e}")
             raise
 
-    def get_parent_chunk(self, child_doc):
-        """根据子块获取对应的父块"""
-        parent_id = child_doc.metadata.get('parent_id')
-        if not hasattr(self, 'parent_chunks') or not self.parent_chunks:
-            raise ValueError("Parent chunks not available. Please run split_documents first.")
-            
-        if parent_id:
-            for parent in self.parent_chunks:
-                if parent.metadata['chunk_id'] == parent_id:
-                    return parent
-        return child_doc
-
     def get_formatted_source_info(self, doc):
         """获取格式化的源文件信息"""
         source = doc.metadata.get('source', 'Unknown source')
