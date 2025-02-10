@@ -111,6 +111,9 @@ class DocumentProcessor:
             base_url=base_url if base_url else "https://api.openai.com/v1"
         )
         
+        # 初始化 parent_chunks
+        self.parent_chunks = []
+        
     def load_document(self, file_path):
         """加载文档"""
         loader = PyPDFLoader(file_path)
@@ -133,7 +136,6 @@ class DocumentProcessor:
         
         # 为每个父块创建子块
         all_children = []
-        parent_to_children = {}
         
         for parent_idx, parent in enumerate(parent_chunks):
             # 使用内容哈希作为父块ID
@@ -149,17 +151,17 @@ class DocumentProcessor:
                 child.metadata['parent_id'] = parent.metadata['chunk_id']
                 child.metadata['chunk_id'] = f'child_{child_hash}_p{parent_idx}_c{child_idx}'
                 all_children.append(child)
-            
-            # 记录父块到子块的映射
-            parent_to_children[parent.metadata['chunk_id']] = children
         
+        # 存储父块
         self.parent_chunks = parent_chunks
-        self.parent_to_children = parent_to_children
         
         return all_children
         
     def add_to_vectorstore(self, documents):
         """将父块和子块分别添加到向量存储"""
+        if not hasattr(self, 'parent_chunks') or not self.parent_chunks:
+            raise ValueError("Parent chunks not available. Please run split_documents first.")
+            
         # 分离父块和子块
         parent_docs = self.parent_chunks
         child_docs = documents
@@ -186,6 +188,9 @@ class DocumentProcessor:
     def get_parent_chunk(self, child_doc):
         """根据子块获取对应的父块"""
         parent_id = child_doc.metadata.get('parent_id')
+        if not hasattr(self, 'parent_chunks') or not self.parent_chunks:
+            raise ValueError("Parent chunks not available. Please run split_documents first.")
+            
         if parent_id:
             for parent in self.parent_chunks:
                 if parent.metadata['chunk_id'] == parent_id:
