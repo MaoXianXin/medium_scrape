@@ -2,15 +2,13 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
-import os
 import hashlib
 
 class DocumentProcessor:
     def __init__(self, openai_api_key, base_url=None):
-        os.environ["OPENAI_API_KEY"] = openai_api_key
-        
         self.embeddings = OpenAIEmbeddings(
             model="text-embedding-3-small",
+            api_key=openai_api_key,
             base_url=base_url if base_url else "https://api.openai.com/v1"
         )
         

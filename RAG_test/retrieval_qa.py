@@ -2,13 +2,12 @@ from langchain_openai.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage, Document
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
-import os
+
 class RetrievalQA:
     def __init__(self, openai_api_key, base_url=None):
-        os.environ["OPENAI_API_KEY"] = openai_api_key
-        
         self.embeddings = OpenAIEmbeddings(
             model="text-embedding-3-small",
+            api_key=openai_api_key,
             base_url=base_url if base_url else "https://api.openai.com/v1"
         )
         
@@ -27,6 +26,7 @@ class RetrievalQA:
         self.llm = ChatOpenAI(
             model="claude-3-5-sonnet-20240620",
             temperature=0,
+            api_key=openai_api_key,
             base_url=base_url if base_url else "https://api.openai.com/v1"
         )
 

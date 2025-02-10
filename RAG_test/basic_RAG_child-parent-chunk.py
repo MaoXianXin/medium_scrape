@@ -65,19 +65,16 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
-import os
 from langchain.schema import Document
 from langchain_openai.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage
 import hashlib
 class DocumentProcessor:
     def __init__(self, openai_api_key, base_url=None):
-        # 初始化配置
-        os.environ["OPENAI_API_KEY"] = openai_api_key
-        
         # 初始化各个组件
         self.embeddings = OpenAIEmbeddings(
             model="text-embedding-3-small",
+            api_key=openai_api_key,
             base_url=base_url if base_url else "https://api.openai.com/v1"
         )
         # 添加父块分割器
@@ -107,6 +104,7 @@ class DocumentProcessor:
         self.llm = ChatOpenAI(
             model="claude-3-5-sonnet-20240620",
             temperature=0,
+            api_key=openai_api_key,
             base_url=base_url if base_url else "https://api.openai.com/v1"
         )
         
