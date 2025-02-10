@@ -2,9 +2,11 @@ from langchain_openai.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage, Document
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
-
+import os
 class RetrievalQA:
     def __init__(self, openai_api_key, base_url=None):
+        os.environ["OPENAI_API_KEY"] = openai_api_key
+        
         self.embeddings = OpenAIEmbeddings(
             model="text-embedding-3-small",
             base_url=base_url if base_url else "https://api.openai.com/v1"
@@ -25,16 +27,18 @@ class RetrievalQA:
         self.llm = ChatOpenAI(
             model="claude-3-5-sonnet-20240620",
             temperature=0,
-            openai_api_key=openai_api_key,
             base_url=base_url if base_url else "https://api.openai.com/v1"
         )
 
     def get_formatted_source_info(self, doc):
         """获取格式化的源文件信息"""
+        source = doc.metadata.get('source', 'Unknown source')
+        page = doc.metadata.get('page', 'Unknown page')
+        chunk_id = doc.metadata.get('chunk_id', 'Unknown chunk')
         return {
-            'source': doc.metadata.get('source', 'Unknown source'),
-            'page': doc.metadata.get('page', 'Unknown page'),
-            'chunk_id': doc.metadata.get('chunk_id', 'Unknown chunk')
+            'source': source,
+            'page': page,
+            'chunk_id': chunk_id
         }
 
     def _get_parent_document_info(self, parent_id):

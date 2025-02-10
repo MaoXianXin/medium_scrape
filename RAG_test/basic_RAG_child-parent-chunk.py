@@ -107,7 +107,6 @@ class DocumentProcessor:
         self.llm = ChatOpenAI(
             model="claude-3-5-sonnet-20240620",
             temperature=0,
-            openai_api_key=openai_api_key,
             base_url=base_url if base_url else "https://api.openai.com/v1"
         )
         
