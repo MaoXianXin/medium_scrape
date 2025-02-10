@@ -66,6 +66,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 import os
+from langchain.schema import Document
 from langchain_openai.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage
 import hashlib
@@ -90,11 +91,19 @@ class DocumentProcessor:
             chunk_overlap=20,
             add_start_index=True
         )
-        self.vector_store = Chroma(
+        # 添加两个 Chroma 集合，分别用于存储父块和子块
+        self.vector_store_children = Chroma(
             embedding_function=self.embeddings,
-            persist_directory="./chroma_db",  # 指定存储目录
-            collection_name="my_collection"    # 可选：指定集合名称
+            persist_directory="./chroma_db_children",
+            collection_name="child_chunks"
         )
+        
+        self.vector_store_parents = Chroma(
+            embedding_function=self.embeddings,
+            persist_directory="./chroma_db_parents",
+            collection_name="parent_chunks"
+        )
+        
         self.llm = ChatOpenAI(
             model="claude-3-5-sonnet-20240620",
             temperature=0,
@@ -150,8 +159,29 @@ class DocumentProcessor:
         return all_children
         
     def add_to_vectorstore(self, documents):
-        """将子块添加到向量存储"""
-        return self.vector_store.add_documents(documents=documents, ids=[doc.metadata['chunk_id'] for doc in documents])
+        """将父块和子块分别添加到向量存储"""
+        # 分离父块和子块
+        parent_docs = self.parent_chunks
+        child_docs = documents
+        
+        try:
+            # 存储父块
+            self.vector_store_parents.add_documents(
+                documents=parent_docs,
+                ids=[doc.metadata['chunk_id'] for doc in parent_docs]
+            )
+            self.vector_store_parents.persist()  # 确保数据持久化
+            
+            # 存储子块
+            self.vector_store_children.add_documents(
+                documents=child_docs,
+                ids=[doc.metadata['chunk_id'] for doc in child_docs]
+            )
+            self.vector_store_children.persist()  # 确保数据持久化
+            
+        except Exception as e:
+            print(f"Error adding documents to vector store: {e}")
+            raise
 
     def get_parent_chunk(self, child_doc):
         """根据子块获取对应的父块"""
@@ -174,26 +204,40 @@ class DocumentProcessor:
         }
 
     def similarity_search(self, query, k=4):
-        """相似度搜索，返回父块及其源信息"""
-        child_results = self.vector_store.similarity_search(query, k=k)
+        """使用子块进行相似度搜索，返回父块及其源信息"""
+        # 首先在子块集合中搜索
+        child_results = self.vector_store_children.similarity_search(query, k=k)
+        
+        # 获取相关父块的ID
+        parent_ids = [doc.metadata['parent_id'] for doc in child_results]
+        
         # 使用集合来跟踪已经添加的父块ID
         seen_parent_ids = set()
         results = []
-        for doc in child_results:
-            parent_doc = self.get_parent_chunk(doc)
-            parent_id = parent_doc.metadata['chunk_id']
-            # 只有当父块ID未被处理过时才添加到结果中
+        for parent_id in parent_ids:
             if parent_id not in seen_parent_ids:
                 seen_parent_ids.add(parent_id)
-                results.append({
-                    'document': parent_doc,
-                    'source_info': self.get_formatted_source_info(parent_doc)
-                })
-        return results
+                # 使用父块ID从父块集合中检索文档
+                parent_docs = self.vector_store_parents.get(
+                    ids=[parent_id],
+                    include=["documents", "metadatas"]
+                )
+                
+                if parent_docs and parent_docs['documents']:
+                    parent_doc = Document(
+                        page_content=parent_docs['documents'][0],
+                        metadata=parent_docs['metadatas'][0]
+                    )
+                    results.append({
+                        'document': parent_doc,
+                        'source_info': self.get_formatted_source_info(parent_doc)
+                    })
         
+        return results
+
     def mmr_search(self, query, k=4, fetch_k=20):
         """最大边际相关性搜索，返回父块及其源信息"""
-        child_results = self.vector_store.max_marginal_relevance_search(
+        child_results = self.vector_store_children.max_marginal_relevance_search(
             query,
             k=k,
             fetch_k=fetch_k
@@ -202,35 +246,54 @@ class DocumentProcessor:
         seen_parent_ids = set()
         results = []
         for doc in child_results:
-            parent_doc = self.get_parent_chunk(doc)
-            parent_id = parent_doc.metadata['chunk_id']
-            # 只有当父块ID未被处理过时才添加到结果中
+            parent_id = doc.metadata['parent_id']
             if parent_id not in seen_parent_ids:
                 seen_parent_ids.add(parent_id)
-                results.append({
-                    'document': parent_doc,
-                    'source_info': self.get_formatted_source_info(parent_doc)
-                })
+                # 使用父块ID从父块集合中检索文档
+                parent_docs = self.vector_store_parents.get(
+                    ids=[parent_id],
+                    include=["documents", "metadatas"]
+                )
+                
+                if parent_docs and parent_docs['documents']:
+                    parent_doc = Document(
+                        page_content=parent_docs['documents'][0],
+                        metadata=parent_docs['metadatas'][0]
+                    )
+                    results.append({
+                        'document': parent_doc,
+                        'source_info': self.get_formatted_source_info(parent_doc)
+                    })
         return results
         
     def similarity_score_threshold_search(self, query, score_threshold=0.8):
         """相似度阈值搜索，返回父块及其源信息"""
-        results = self.vector_store.similarity_search_with_score(query)
+        results = self.vector_store_children.similarity_search_with_score(query)
         # 使用集合来跟踪已经添加的父块ID
         seen_parent_ids = set()
         filtered_results = []
+        
         for doc, score in results:
             if score >= score_threshold:
-                parent_doc = self.get_parent_chunk(doc)
-                parent_id = parent_doc.metadata['chunk_id']
-                # 只有当父块ID未被处理过时才添加到结果中
+                parent_id = doc.metadata['parent_id']
                 if parent_id not in seen_parent_ids:
                     seen_parent_ids.add(parent_id)
-                    filtered_results.append({
-                        'document': parent_doc,
-                        'source_info': self.get_formatted_source_info(parent_doc),
-                        'score': score
-                    })
+                    # 使用父块ID从父块集合中检索文档
+                    parent_docs = self.vector_store_parents.get(
+                        ids=[parent_id],
+                        include=["documents", "metadatas"]
+                    )
+                    
+                    if parent_docs and parent_docs['documents']:
+                        parent_doc = Document(
+                            page_content=parent_docs['documents'][0],
+                            metadata=parent_docs['metadatas'][0]
+                        )
+                        filtered_results.append({
+                            'document': parent_doc,
+                            'source_info': self.get_formatted_source_info(parent_doc),
+                            'score': score
+                        })
         return filtered_results
 
     def process_document(self, file_path):
@@ -290,7 +353,7 @@ def main():
     for i, doc in enumerate(similar_docs, 1):
         print(f"\n文档 {i}:")
         print(f"Source: {doc['source_info']['source']}, Page: {doc['source_info']['page']}, Chunk ID: {doc['source_info']['chunk_id']}")
-        print(doc['document'].page_content[:200] + "...")
+        print(doc['document'].page_content + "...")
     
     print("\nAI 回答:")
     print(response.content)
