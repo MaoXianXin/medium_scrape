@@ -14,9 +14,9 @@ def main():
     
     # 检索问答
     qa = RetrievalQA(api_key, base_url)
-    query = "What is LangSmith?"
-    print("\n用户查询:", query)
-    result = qa.query(query)
+    query_text = "What is LangSmith?"
+    print("\n用户查询:", query_text)
+    result = qa.query(query_text)
     
     print("\n检索到的相关文档:")
     for i, doc in enumerate(result['sources'], 1):
