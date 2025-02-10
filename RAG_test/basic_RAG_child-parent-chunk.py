@@ -126,19 +126,19 @@ class DocumentProcessor:
         all_children = []
         parent_to_children = {}
         
-        for parent in parent_chunks:
+        for parent_idx, parent in enumerate(parent_chunks):
             # 使用内容哈希作为父块ID
             parent_hash = self.get_content_hash(parent.page_content)
-            parent.metadata['chunk_id'] = f'parent_{parent_hash}'
+            parent.metadata['chunk_id'] = f'parent_{parent_hash}_{parent_idx}'
             
             # 从父块创建子块
             children = self.child_splitter.split_documents([parent])
             
             # 为子块添加父块引用
-            for i, child in enumerate(children):
+            for child_idx, child in enumerate(children):
                 child_hash = self.get_content_hash(child.page_content)
                 child.metadata['parent_id'] = parent.metadata['chunk_id']
-                child.metadata['chunk_id'] = f'child_{child_hash}_{i}'
+                child.metadata['chunk_id'] = f'child_{child_hash}_p{parent_idx}_c{child_idx}'
                 all_children.append(child)
             
             # 记录父块到子块的映射
@@ -255,7 +255,7 @@ def main():
     )
     
     # 处理文档
-    file_path = "/home/mao/Downloads/Introduction _ 🦜️🔗 LangChain.pdf"
+    file_path = "/home/mao/Downloads/LangChain.pdf"
     print("开始处理文档...")
     result = processor.process_document(file_path)
     print(result)

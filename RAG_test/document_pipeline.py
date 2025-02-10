@@ -111,17 +111,17 @@ class DocumentPipeline:
         all_children = []
         parent_to_children = {}
         
-        for parent in parent_chunks:
+        for parent_idx, parent in enumerate(parent_chunks):
             parent_hash = self.get_content_hash(parent.page_content)
-            parent.metadata['chunk_id'] = f'parent_{parent_hash}'
+            parent.metadata['chunk_id'] = f'parent_{parent_hash}_{parent_idx}'
             
             children = self.child_splitter.split_documents([parent])
             
             # 为每个子块添加序号，确保ID唯一
-            for i, child in enumerate(children):
+            for child_idx, child in enumerate(children):
                 child_hash = self.get_content_hash(child.page_content)
                 child.metadata['parent_id'] = parent.metadata['chunk_id']
-                child.metadata['chunk_id'] = f'child_{child_hash}_{i}'
+                child.metadata['chunk_id'] = f'child_{child_hash}_p{parent_idx}_c{child_idx}'
                 all_children.append(child)
             
             parent_to_children[parent.metadata['chunk_id']] = children
@@ -202,7 +202,7 @@ def main():
     # 重置集合
     # pipeline.reset_collection()
 
-    result = pipeline.process_document("/home/mao/Downloads/Introduction _ 🦜️🔗 LangChain.pdf")
+    result = pipeline.process_document("/home/mao/Downloads/LangChain.pdf")
     print(f"文档处理完成：{result}")
 
 if __name__ == "__main__":
