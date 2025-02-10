@@ -172,14 +172,12 @@ class DocumentProcessor:
                 documents=parent_docs,
                 ids=[doc.metadata['chunk_id'] for doc in parent_docs]
             )
-            self.vector_store_parents.persist()  # 确保数据持久化
             
             # 存储子块
             self.vector_store_children.add_documents(
                 documents=child_docs,
                 ids=[doc.metadata['chunk_id'] for doc in child_docs]
             )
-            self.vector_store_children.persist()  # 确保数据持久化
             
         except Exception as e:
             print(f"Error adding documents to vector store: {e}")
