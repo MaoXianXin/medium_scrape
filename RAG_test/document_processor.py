@@ -1,4 +1,4 @@
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
@@ -39,8 +39,17 @@ class DocumentProcessor:
         self.parent_chunks = []
 
     def load_document(self, file_path):
-        """加载文档"""
-        loader = PyPDFLoader(file_path)
+        """加载文档，支持PDF和TXT格式"""
+        # 获取文件扩展名
+        file_extension = file_path.lower().split('.')[-1]
+        
+        if file_extension == 'pdf':
+            loader = PyPDFLoader(file_path)
+        elif file_extension == 'txt':
+            loader = TextLoader(file_path)
+        else:
+            raise ValueError(f"Unsupported file format: {file_extension}. Only PDF and TXT files are supported.")
+            
         docs = loader.load()
         # 添加源文件信息
         for doc in docs:
