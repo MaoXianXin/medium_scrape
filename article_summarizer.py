@@ -1,7 +1,10 @@
 """
 flowchart TD
     A[开始] --> B[初始化 ArticleSummarizer]
-    B --> C[读取文章内容]
+    B --> B1[初始化summary_model]
+    B1 --> B2[初始化extraction_model]
+    B2 --> B3[初始化tokenizer]
+    B3 --> C[读取文章内容]
     C --> D[调用 summarize_article 方法]
     
     D --> E{检查文章长度<br/>是否超过10000 tokens?}
@@ -19,32 +22,39 @@ flowchart TD
     L -->|否| M[合并所有摘要]
     
     M --> N[保存完整摘要到文件]
-    N --> O[返回完整摘要]
-    O --> P[结束]
+    N --> O[提取并保存核心观点]
+    O --> P[返回完整摘要和核心观点]
+    P --> Q[结束]
 
     subgraph "segment_article 方法"
-    Q[接收文章文本] --> R[将文本转换为 tokens]
-    R --> S[按 max_tokens_per_segment<br/>分割文章]
-    S --> T[处理最后一个分段]
-    T --> U[返回分段列表]
+    Q1[接收文章文本] --> R1[将文本转换为 tokens]
+    R1 --> S1[按 max_tokens_per_segment<br/>分割文章]
+    S1 --> T1{最后一段<1000 tokens?}
+    T1 -->|是| U1[与前一段合并]
+    T1 -->|否| V1[保持独立]
+    U1 --> W1[返回分段列表]
+    V1 --> W1
     end
 
     subgraph "generate_summary 方法"
-    V[创建提示模板] --> W[调用 LLM 生成摘要]
-    W --> X[保存对话记录]
-    X --> Y[返回摘要内容]
+    V2[创建结构化提示模板] --> W2[构建 LangChain 链]
+    W2 --> X2[调用 LLM 生成摘要]
+    X2 --> Y2[保存对话记录]
+    Y2 --> Z2[返回摘要内容]
     end
 
 classDiagram
     class ArticleSummarizer {
         -llm: ChatOpenAI
+        -extraction_llm: ChatOpenAI
         -max_tokens_per_segment: int
         -tokenizer: tiktoken
-        +__init__(openai_api_key, model, temperature, base_url, max_tokens_per_segment)
-        +summarize_article(article, output_dir)
-        -segment_article(article)
-        -generate_summary(article)
-        -_save_conversation(prompt, response, conversation_type)
+        +__init__(openai_api_key: str, summary_model: str, extraction_model: str, temperature: float, base_url: str, max_tokens_per_segment: int)
+        +summarize_article(article: str, output_dir: str) dict
+        -segment_article(article: str) list
+        -generate_summary(article: str) str
+        -_save_conversation(prompt: str, response: str, conversation_type: str) str
+        -extract_key_points(summary: str) str
     }
 """
 
@@ -57,27 +67,36 @@ import hashlib
 import time
 
 class ArticleSummarizer:
-    def __init__(self, openai_api_key, model="gpt-4-turbo", temperature=0.3, base_url=None, max_tokens_per_segment=2000):
+    def __init__(self, openai_api_key, summary_model="gpt-4-turbo", extraction_model="deepseek-v3", 
+                 temperature=0.3, base_url=None, max_tokens_per_segment=2000):
         """
         Initialize the ArticleSummarizer with OpenAI API key and optional parameters
         
         Args:
             openai_api_key (str): OpenAI API key for authentication
-            model (str, optional): OpenAI model to use. Defaults to "gpt-4-turbo"
+            summary_model (str, optional): Model for generating summary. Defaults to "gpt-4-turbo"
+            extraction_model (str, optional): Model for extracting key points. Defaults to "deepseek-v3"
             temperature (float, optional): Model temperature setting. Defaults to 0.3
             base_url (str, optional): Base URL for API endpoint
             max_tokens_per_segment (int, optional): Maximum tokens per segment. Defaults to 2000
         """
         os.environ["OPENAI_API_KEY"] = openai_api_key
         
-        llm_params = {
-            "model": model,
+        # 初始化用于生成总结的模型
+        summary_params = {
+            "model": summary_model,
             "temperature": temperature
         }
         if base_url:
-            llm_params["base_url"] = base_url
+            summary_params["base_url"] = base_url
         
-        self.llm = ChatOpenAI(**llm_params)
+        self.llm = ChatOpenAI(**summary_params)
+        
+        # 初始化用于提取核心观点的模型
+        extraction_params = summary_params.copy()
+        extraction_params["model"] = extraction_model
+        self.extraction_llm = ChatOpenAI(**extraction_params)
+        
         self.max_tokens_per_segment = max_tokens_per_segment
         self.tokenizer = tiktoken.encoding_for_model("gpt-4-turbo")
 
@@ -176,6 +195,43 @@ class ArticleSummarizer:
         
         return summary
 
+    def extract_key_points(self, summary):
+        """
+        使用 deepseek-v3 模型从总结中提取核心观点
+        
+        Args:
+            summary (str): 文章总结内容
+            
+        Returns:
+            str: 提取的核心观点
+        """
+        extraction_prompt = PromptTemplate(
+            input_variables=["summary"],
+            template="""
+请从以下文章总结中提取"核心观点提炼"部分的内容。只需要返回核心观点部分，不需要其他内容：
+---待处理的文章总结内容---
+{summary}
+---待处理的文章总结内容---
+
+请按照以下格式返回：
+核心观点：
+1. [观点1]
+2. [观点2]
+...
+"""
+        )
+        
+        chain = extraction_prompt | self.extraction_llm
+        key_points = chain.invoke({"summary": summary}).content
+        
+        self._save_conversation(
+            prompt=extraction_prompt.format(summary=summary),
+            response=key_points,
+            conversation_type="key_points_extraction"
+        )
+        
+        return key_points
+
     def summarize_article(self, article, output_dir="summary_results"):
         """
         Complete article summarization workflow
@@ -185,7 +241,7 @@ class ArticleSummarizer:
             output_dir (str): Directory to save the summary results
             
         Returns:
-            str: Complete article summary
+            dict: Complete article summary and key points
         """
         # Check token count
         tokens = self.tokenizer.encode(article, disallowed_special=())
@@ -215,14 +271,23 @@ class ArticleSummarizer:
         with open(os.path.join(output_dir, "article_summary.txt"), "w", encoding="utf-8") as f:
             f.write(full_summary)
         
-        return full_summary
+        # 提取并保存核心观点
+        key_points = self.extract_key_points(full_summary)
+        with open(os.path.join(output_dir, "key_points.txt"), "w", encoding="utf-8") as f:
+            f.write(key_points)
+        
+        return {
+            "full_summary": full_summary,
+            "key_points": key_points
+        }
 
 
 # Usage example
 if __name__ == "__main__":
     summarizer = ArticleSummarizer(
         openai_api_key="sk-noerGmiAt3J8SQdnj1UI74K4ixZhB55OUuEp6rfa85BOjVcI",
-        model="deepseek-r1",
+        summary_model="deepseek-r1",      # 用于生成总结的模型
+        extraction_model="deepseek-v3",   # 用于提取核心观点的模型
         temperature=0.3,
         base_url="https://zzzzapi.com/v1"  # optional
     )
