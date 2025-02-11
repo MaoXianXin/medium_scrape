@@ -232,13 +232,14 @@ class ArticleSummarizer:
         
         return key_points
 
-    def summarize_article(self, article, output_dir="summary_results"):
+    def summarize_article(self, article, output_dir="summary_results", article_path=None):
         """
         Complete article summarization workflow
         
         Args:
             article (str): Full article text
             output_dir (str): Directory to save the summary results
+            article_path (str, optional): Path of the source article
             
         Returns:
             dict: Complete article summary and key points
@@ -274,6 +275,8 @@ class ArticleSummarizer:
         # 提取并保存核心观点
         key_points = self.extract_key_points(full_summary)
         with open(os.path.join(output_dir, "key_points.txt"), "w", encoding="utf-8") as f:
+            if article_path:
+                f.write(f"来源文章：{article_path}\n\n")
             f.write(key_points)
         
         return {
@@ -292,8 +295,9 @@ if __name__ == "__main__":
         base_url="https://zzzzapi.com/v1"  # optional
     )
 
-    with open("article.txt", "r", encoding="utf-8") as f:
+    article_path = "article.txt"  # 文章路径
+    with open(article_path, "r", encoding="utf-8") as f:
         article = f.read()
 
-    summary = summarizer.summarize_article(article)
+    summary = summarizer.summarize_article(article, article_path=article_path)
     print(summary)
