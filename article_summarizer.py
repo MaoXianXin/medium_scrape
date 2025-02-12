@@ -1,61 +1,24 @@
 """
-flowchart TD
-    A[开始] --> B[初始化 ArticleSummarizer]
-    B --> B1[初始化summary_model]
-    B1 --> B2[初始化extraction_model]
-    B2 --> B3[初始化tokenizer]
-    B3 --> C[读取文章内容]
-    C --> D[调用 summarize_article 方法]
-    
-    D --> E{检查文章长度<br/>是否超过10000 tokens?}
-    E -->|是| F[返回 None]
-    E -->|否| G[创建输出目录]
-    
-    G --> H[调用 segment_article<br/>分段文章]
-    H --> I[遍历每个文章段落]
-    
-    I --> J[调用 generate_summary<br/>生成每段摘要]
-    J --> K[保存对话历史<br/>_save_conversation]
-    
-    K --> L{是否还有更多段落?}
-    L -->|是| I
-    L -->|否| M[合并所有摘要]
-    
-    M --> N[保存完整摘要到文件]
-    N --> O[提取并保存核心观点]
-    O --> P[返回完整摘要和核心观点]
-    P --> Q[结束]
-
-    subgraph "segment_article 方法"
-    Q1[接收文章文本] --> R1[将文本转换为 tokens]
-    R1 --> S1[按 max_tokens_per_segment<br/>分割文章]
-    S1 --> T1{最后一段<1000 tokens?}
-    T1 -->|是| U1[与前一段合并]
-    T1 -->|否| V1[保持独立]
-    U1 --> W1[返回分段列表]
-    V1 --> W1
-    end
-
-    subgraph "generate_summary 方法"
-    V2[创建结构化提示模板] --> W2[构建 LangChain 链]
-    W2 --> X2[调用 LLM 生成摘要]
-    X2 --> Y2[保存对话记录]
-    Y2 --> Z2[返回摘要内容]
-    end
-
 classDiagram
     class ArticleSummarizer {
-        -llm: ChatOpenAI
-        -extraction_llm: ChatOpenAI
-        -max_tokens_per_segment: int
-        -tokenizer: tiktoken
-        +__init__(openai_api_key: str, summary_model: str, extraction_model: str, temperature: float, base_url: str, max_tokens_per_segment: int)
-        +summarize_article(article: str, output_dir: str) dict
-        -segment_article(article: str) list
-        -generate_summary(article: str) str
-        -_save_conversation(prompt: str, response: str, conversation_type: str) str
-        -extract_key_points(summary: str) str
+        +__init__(openai_api_key, summary_model, extraction_model, temperature, base_url, max_tokens_per_segment)
+        +batch_process_articles(input_dir, output_dir) 
+        -_save_conversation(prompt, response, conversation_type)
+        +segment_article(article)
+        +generate_summary(article)
+        +extract_key_points(summary)
+        +summarize_article(article, output_dir, article_path, file_prefix)
     }
+
+    ArticleSummarizer --> batch_process_articles : 批量处理入口
+    batch_process_articles --> summarize_article : 处理单篇文章
+    
+    summarize_article --> segment_article : 1. 文章分段
+    summarize_article --> generate_summary : 2. 生成摘要
+    summarize_article --> extract_key_points : 3. 提取关键点
+    
+    generate_summary --> _save_conversation : 保存对话历史
+    extract_key_points --> _save_conversation : 保存对话历史
 """
 
 import os
