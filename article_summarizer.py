@@ -100,6 +100,56 @@ class ArticleSummarizer:
         self.max_tokens_per_segment = max_tokens_per_segment
         self.tokenizer = tiktoken.encoding_for_model("gpt-4-turbo")
 
+    def batch_process_articles(self, input_dir, output_dir="summary_results"):
+        """
+        批量处理指定目录下的所有txt文件
+        
+        Args:
+            input_dir (str): 输入文件夹路径，包含待处理的txt文件
+            output_dir (str): 输出文件夹路径，用于保存处理结果
+            
+        Returns:
+            dict: 包含所有文章处理结果的字典，格式为 {文件名: 处理结果}
+        """
+        if not os.path.exists(input_dir):
+            print(f"输入目录 {input_dir} 不存在")
+            return None
+            
+        # 确保输出目录存在
+        os.makedirs(output_dir, exist_ok=True)
+            
+        results = {}
+        # 遍历目录下的所有txt文件
+        for filename in os.listdir(input_dir):
+            if filename.endswith('.txt'):
+                article_path = os.path.join(input_dir, filename)
+                try:
+                    # 使用文件名前缀来区分不同文章的输出文件
+                    prefix = filename[:-4]  # 移除.txt后缀
+                    
+                    print(f"正在处理文件: {filename}")
+                    with open(article_path, 'r', encoding='utf-8') as f:
+                        article = f.read()
+                    
+                    # 处理单个文章，使用文件名前缀
+                    result = self.summarize_article(
+                        article, 
+                        output_dir=output_dir,
+                        article_path=article_path,
+                        file_prefix=prefix + "_"  # 添加下划线分隔符
+                    )
+                    
+                    if result:
+                        results[filename] = result
+                    else:
+                        print(f"文件 {filename} 处理失败")
+                        
+                except Exception as e:
+                    print(f"处理文件 {filename} 时发生错误: {str(e)}")
+                    results[filename] = {"error": str(e)}
+                    
+        return results
+
     def _save_conversation(self, prompt, response, conversation_type="summary"):
         """Save conversation history to a JSON file"""
         conversation_id = hashlib.md5(str(time.time()).encode()).hexdigest()
@@ -232,7 +282,7 @@ class ArticleSummarizer:
         
         return key_points
 
-    def summarize_article(self, article, output_dir="summary_results", article_path=None):
+    def summarize_article(self, article, output_dir="summary_results", article_path=None, file_prefix=""):
         """
         Complete article summarization workflow
         
@@ -240,6 +290,7 @@ class ArticleSummarizer:
             article (str): Full article text
             output_dir (str): Directory to save the summary results
             article_path (str, optional): Path of the source article
+            file_prefix (str): Prefix for output files
             
         Returns:
             dict: Complete article summary and key points
@@ -268,13 +319,15 @@ class ArticleSummarizer:
         # Combine all summaries
         full_summary = "\n\n".join(segment_summaries)
         
-        # Save the summary
-        with open(os.path.join(output_dir, "article_summary.txt"), "w", encoding="utf-8") as f:
+        # Save the summary with prefix
+        summary_file = os.path.join(output_dir, f"{file_prefix}article_summary.txt")
+        with open(summary_file, "w", encoding="utf-8") as f:
             f.write(full_summary)
         
-        # 提取并保存核心观点
+        # 提取并保存核心观点，同样使用前缀
         key_points = self.extract_key_points(full_summary)
-        with open(os.path.join(output_dir, "key_points.txt"), "w", encoding="utf-8") as f:
+        key_points_file = os.path.join(output_dir, f"{file_prefix}key_points.txt")
+        with open(key_points_file, "w", encoding="utf-8") as f:
             if article_path:
                 f.write(f"来源文章：{article_path}\n\n")
             f.write(key_points)
@@ -288,16 +341,26 @@ class ArticleSummarizer:
 # Usage example
 if __name__ == "__main__":
     summarizer = ArticleSummarizer(
-        openai_api_key="sk-noerGmiAt3J8SQdnj1UI74K4ixZhB55OUuEp6rfa85BOjVcI",
+        openai_api_key="sk-jsbIUYq1MwwUheWDDeB01c1a7a2246E3956b6b75762c9f21",
         summary_model="deepseek-r1",      # 用于生成总结的模型
         extraction_model="deepseek-v3",   # 用于提取核心观点的模型
         temperature=0.3,
-        base_url="https://zzzzapi.com/v1"  # optional
+        base_url="https://www.gptapi.us/v1"  # optional
     )
 
-    article_path = "article.txt"  # 文章路径
-    with open(article_path, "r", encoding="utf-8") as f:
-        article = f.read()
-
-    summary = summarizer.summarize_article(article, article_path=article_path)
-    print(summary)
+    # 支持单文件处理
+    article_path = "article.txt"
+    if os.path.isfile(article_path):
+        with open(article_path, "r", encoding="utf-8") as f:
+            article = f.read()
+        summary = summarizer.summarize_article(article, article_path=article_path)
+        print(summary)
+    
+    # 支持批量处理
+    input_directory = "articles"  # 包含多个txt文件的目录
+    if os.path.isdir(input_directory):
+        results = summarizer.batch_process_articles(input_directory)
+        print("\n批量处理结果:")
+        for filename, result in results.items():
+            print(f"\n文件: {filename}")
+            print(result)
