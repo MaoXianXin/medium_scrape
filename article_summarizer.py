@@ -117,30 +117,40 @@ class ArticleSummarizer:
             
         # 确保输出目录存在
         os.makedirs(output_dir, exist_ok=True)
-            
+        
+        # 创建一个统一的核心观点文件
+        all_key_points_file = os.path.join(output_dir, "all_key_points.txt")
+        
         results = {}
         # 遍历目录下的所有txt文件
         for filename in os.listdir(input_dir):
             if filename.endswith('.txt'):
                 article_path = os.path.join(input_dir, filename)
                 try:
-                    # 使用文件名前缀来区分不同文章的输出文件
                     prefix = filename[:-4]  # 移除.txt后缀
                     
                     print(f"正在处理文件: {filename}")
                     with open(article_path, 'r', encoding='utf-8') as f:
                         article = f.read()
                     
-                    # 处理单个文章，使用文件名前缀
+                    # 处理单个文章
                     result = self.summarize_article(
                         article, 
                         output_dir=output_dir,
                         article_path=article_path,
-                        file_prefix=prefix + "_"  # 添加下划线分隔符
+                        file_prefix=prefix + "_"
                     )
                     
                     if result:
                         results[filename] = result
+                        # 将核心观点追加到统一文件中
+                        with open(all_key_points_file, 'a', encoding='utf-8') as f:
+                            f.write(f"\n{'='*50}\n")
+                            f.write(f"文件名：{filename}\n")
+                            f.write(f"文件路径：{article_path}\n")
+                            f.write(f"{'='*50}\n\n")
+                            f.write(result['key_points'])
+                            f.write("\n\n")
                     else:
                         print(f"文件 {filename} 处理失败")
                         
