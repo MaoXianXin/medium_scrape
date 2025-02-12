@@ -320,31 +320,46 @@ class ArticleSummarizer:
         # Segment article if necessary
         segments = self.segment_article(article)
         
-        # Generate summary for each segment
+        # Generate summary and extract key points for each segment
         segment_summaries = []
-        for segment in segments:
+        segment_key_points = []
+        for i, segment in enumerate(segments):
             summary = self.generate_summary(segment)
+            key_points = self.extract_key_points(summary)
+            
             segment_summaries.append(summary)
+            segment_key_points.append(key_points)
+            
+            # Save individual segment results if multiple segments
+            if len(segments) > 1:
+                segment_file = os.path.join(output_dir, f"{file_prefix}segment_{i+1}_summary.txt")
+                with open(segment_file, "w", encoding="utf-8") as f:
+                    f.write(summary)
+                
+                segment_key_points_file = os.path.join(output_dir, f"{file_prefix}segment_{i+1}_key_points.txt")
+                with open(segment_key_points_file, "w", encoding="utf-8") as f:
+                    if article_path:
+                        f.write(f"来源文章段落 {i+1}：{article_path}\n\n")
+                    f.write(key_points)
         
-        # Combine all summaries
+        # Combine all summaries and key points
         full_summary = "\n\n".join(segment_summaries)
+        all_key_points = "\n\n".join(segment_key_points)
         
-        # Save the summary with prefix
+        # Save the complete summary and key points
         summary_file = os.path.join(output_dir, f"{file_prefix}article_summary.txt")
         with open(summary_file, "w", encoding="utf-8") as f:
             f.write(full_summary)
         
-        # 提取并保存核心观点，同样使用前缀
-        key_points = self.extract_key_points(full_summary)
         key_points_file = os.path.join(output_dir, f"{file_prefix}key_points.txt")
         with open(key_points_file, "w", encoding="utf-8") as f:
             if article_path:
                 f.write(f"来源文章：{article_path}\n\n")
-            f.write(key_points)
+            f.write(all_key_points)
         
         return {
             "full_summary": full_summary,
-            "key_points": key_points
+            "key_points": all_key_points
         }
 
 
@@ -359,7 +374,7 @@ if __name__ == "__main__":
     )
 
     # 支持单文件处理
-    article_path = "article.txt"
+    article_path = "/home/mao/workspace/medium_scrape/articles/meta-releases-llama-3-heres-all-you-need-to-know-88d850cabedd.txt"
     if os.path.isfile(article_path):
         with open(article_path, "r", encoding="utf-8") as f:
             article = f.read()
