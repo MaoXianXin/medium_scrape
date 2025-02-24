@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>《置身时代的社会理论》文本分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         body {
             font-family: 'Microsoft YaHei', sans-serif;
@@ -133,13 +134,18 @@
             bottom: 20px;
             right: 20px;
             width: 300px;
+            min-width: 250px;
+            min-height: 200px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             display: none;
+            overflow: auto;
         }
 
         .chat-header {
+            cursor: move;
+            user-select: none;
             padding: 10px;
             background: #007bff;
             color: white;
@@ -161,6 +167,101 @@
 
         .close-chat {
             cursor: pointer;
+        }
+
+        /* 添加 markdown 内容的样式 */
+        .markdown-content {
+            line-height: 1.6;
+        }
+        .markdown-content code {
+            background-color: #f3f3f3;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .markdown-content pre {
+            background-color: #f3f3f3;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .markdown-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 10px;
+            margin-left: 0;
+            color: #666;
+        }
+
+        /* 添加拖拽边框的样式 */
+        .resizer {
+            position: absolute;
+            background: transparent;
+        }
+
+        .resizer-r {
+            cursor: e-resize;
+            height: 100%;
+            right: 0;
+            top: 0;
+            width: 5px;
+        }
+
+        .resizer-b {
+            cursor: s-resize;
+            height: 5px;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .resizer-rb {
+            cursor: se-resize;
+            height: 10px;
+            width: 10px;
+            right: 0;
+            bottom: 0;
+        }
+
+        /* 添加左边界和上边界的样式 */
+        .resizer-l {
+            cursor: w-resize;
+            height: 100%;
+            left: 0;
+            top: 0;
+            width: 5px;
+        }
+
+        .resizer-t {
+            cursor: n-resize;
+            height: 5px;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+
+        /* 添加左上、右上、左下角的样式 */
+        .resizer-lt {
+            cursor: nw-resize;
+            height: 10px;
+            width: 10px;
+            left: 0;
+            top: 0;
+        }
+
+        .resizer-rt {
+            cursor: ne-resize;
+            height: 10px;
+            width: 10px;
+            right: 0;
+            top: 0;
+        }
+
+        .resizer-lb {
+            cursor: sw-resize;
+            height: 10px;
+            width: 10px;
+            left: 0;
+            bottom: 0;
         }
     </style>
 </head>
@@ -191,7 +292,7 @@
 
     <!-- Add chat interface -->
     <div class="chat-container" id="chatContainer">
-        <div class="chat-header">
+        <div class="chat-header" id="chatHeader">
             <span>AI 对话</span>
             <span class="close-chat" onclick="closeChatWindow()">×</span>
         </div>
@@ -200,6 +301,14 @@
             <textarea id="chatInput" placeholder="输入你的问题..." rows="2" style="width: 100%"></textarea>
             <button onclick="sendMessage()" style="width: 100%; margin-top: 5px;">发送</button>
         </div>
+        <div class="resizer resizer-l"></div>
+        <div class="resizer resizer-t"></div>
+        <div class="resizer resizer-r"></div>
+        <div class="resizer resizer-b"></div>
+        <div class="resizer resizer-lt"></div>
+        <div class="resizer resizer-rt"></div>
+        <div class="resizer resizer-lb"></div>
+        <div class="resizer resizer-rb"></div>
     </div>
 
     <script>
@@ -390,14 +499,140 @@ ${window.selectedContext.text}
                 const data = await response.json();
                 const aiResponse = data.choices[0].message.content;
                 
-                // 添加 AI 回复到对话框
-                chatBody.innerHTML += `<p><strong>AI:</strong> ${aiResponse}</p>`;
+                // 修改添加AI回复到对话框的部分
+                chatBody.innerHTML += `
+                    <p><strong>AI:</strong></p>
+                    <div class="markdown-content">
+                        ${marked.parse(aiResponse)}
+                    </div>
+                `;
                 chatBody.scrollTop = chatBody.scrollHeight;
             } catch (error) {
                 console.error('API 调用失败:', error);
                 chatBody.innerHTML += `<p style="color: red;">发生错误，请稍后重试</p>`;
             }
         }
+
+        // 更新 initializeResize 函数
+        function initializeResize() {
+            const chatContainer = document.getElementById('chatContainer');
+            const chatHeader = document.getElementById('chatHeader');
+            const resizers = chatContainer.querySelectorAll('.resizer');
+
+            // 添加整个对话框的拖动功能
+            chatHeader.addEventListener('mousedown', initDragWindow);
+
+            function initDragWindow(e) {
+                e.preventDefault();
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startLeft = chatContainer.offsetLeft;
+                const startTop = chatContainer.offsetTop;
+
+                function doDragWindow(e) {
+                    const newLeft = startLeft + (e.clientX - startX);
+                    const newTop = startTop + (e.clientY - startY);
+                    
+                    // 添加边界检查
+                    const maxLeft = window.innerWidth - chatContainer.offsetWidth;
+                    const maxTop = window.innerHeight - chatContainer.offsetHeight;
+                    
+                    chatContainer.style.left = Math.min(Math.max(0, newLeft), maxLeft) + 'px';
+                    chatContainer.style.top = Math.min(Math.max(0, newTop), maxTop) + 'px';
+                }
+
+                function stopDragWindow() {
+                    document.removeEventListener('mousemove', doDragWindow);
+                    document.removeEventListener('mouseup', stopDragWindow);
+                }
+
+                document.addEventListener('mousemove', doDragWindow);
+                document.addEventListener('mouseup', stopDragWindow);
+            }
+
+            function initDrag(e, resizer) {
+                e.preventDefault();
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startWidth = chatContainer.offsetWidth;
+                const startHeight = chatContainer.offsetHeight;
+                const startLeft = chatContainer.offsetLeft;
+                const startTop = chatContainer.offsetTop;
+
+                // 使用 requestAnimationFrame 优化性能
+                let rafId = null;
+
+                function doDrag(e) {
+                    if (rafId) {
+                        cancelAnimationFrame(rafId);
+                    }
+
+                    rafId = requestAnimationFrame(() => {
+                        const minWidth = 250;
+                        const minHeight = 200;
+                        const maxWidth = window.innerWidth - startLeft;
+                        const maxHeight = window.innerHeight - startTop;
+
+                        // 右边界拖拽
+                        if (resizer.classList.contains('resizer-r') || 
+                            resizer.classList.contains('resizer-rb') || 
+                            resizer.classList.contains('resizer-rt')) {
+                            const newWidth = startWidth + e.clientX - startX;
+                            chatContainer.style.width = Math.min(Math.max(minWidth, newWidth), maxWidth) + 'px';
+                        }
+
+                        // 左边界拖拽
+                        if (resizer.classList.contains('resizer-l') || 
+                            resizer.classList.contains('resizer-lt') || 
+                            resizer.classList.contains('resizer-lb')) {
+                            const newWidth = startWidth - (e.clientX - startX);
+                            const newLeft = startLeft + (e.clientX - startX);
+                            if (newWidth >= minWidth && newLeft >= 0) {
+                                chatContainer.style.width = newWidth + 'px';
+                                chatContainer.style.left = newLeft + 'px';
+                            }
+                        }
+
+                        // 底边界拖拽
+                        if (resizer.classList.contains('resizer-b') || 
+                            resizer.classList.contains('resizer-rb') || 
+                            resizer.classList.contains('resizer-lb')) {
+                            const newHeight = startHeight + e.clientY - startY;
+                            chatContainer.style.height = Math.min(Math.max(minHeight, newHeight), maxHeight) + 'px';
+                        }
+
+                        // 上边界拖拽
+                        if (resizer.classList.contains('resizer-t') || 
+                            resizer.classList.contains('resizer-lt') || 
+                            resizer.classList.contains('resizer-rt')) {
+                            const newHeight = startHeight - (e.clientY - startY);
+                            const newTop = startTop + (e.clientY - startY);
+                            if (newHeight >= minHeight && newTop >= 0) {
+                                chatContainer.style.height = newHeight + 'px';
+                                chatContainer.style.top = newTop + 'px';
+                            }
+                        }
+                    });
+                }
+
+                function stopDrag() {
+                    if (rafId) {
+                        cancelAnimationFrame(rafId);
+                    }
+                    document.removeEventListener('mousemove', doDrag);
+                    document.removeEventListener('mouseup', stopDrag);
+                }
+
+                document.addEventListener('mousemove', doDrag);
+                document.addEventListener('mouseup', stopDrag);
+            }
+
+            resizers.forEach(resizer => {
+                resizer.addEventListener('mousedown', (e) => initDrag(e, resizer));
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeResize);
     </script>
 </body>
 </html>
