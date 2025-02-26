@@ -532,6 +532,7 @@ ${window.selectedContext.text}
                 
                 // 修改添加AI回复到对话框的部分
                 chatBody.innerHTML += `
+                    ${chatBody.innerHTML ? '<hr style="border: 2px solid #eee; margin: 15px 0;">' : ''}
                     <p><strong>AI:</strong></p>
                     <div class="markdown-content">
                         ${marked.parse(aiResponse)}
