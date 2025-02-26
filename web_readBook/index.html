@@ -160,7 +160,26 @@
             border-radius: 8px 8px 0 0;
             display: flex;
             justify-content: space-between;
+            align-items: center;
             flex-shrink: 0;
+        }
+
+        .context-controls {
+            display: flex;
+            align-items: center;
+            font-size: 0.9em;
+            gap: 5px;
+        }
+
+        .context-controls label {
+            display: flex;
+            align-items: center;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+
+        .context-controls input[type="radio"] {
+            margin-right: 2px;
         }
 
         .chat-body {
@@ -352,6 +371,12 @@
     <div class="chat-container" id="chatContainer">
         <div class="chat-header" id="chatHeader">
             <span>AI 对话</span>
+            <div class="context-controls">
+                <span>上下文范围:</span>
+                <label><input type="radio" name="adjacentRange" value="0" checked> 0</label>
+                <label><input type="radio" name="adjacentRange" value="1"> 1</label>
+                <label><input type="radio" name="adjacentRange" value="2"> 2</label>
+            </div>
             <span class="close-chat" onclick="closeChatWindow()">×</span>
         </div>
         <div class="chat-body" id="chatBody"></div>
@@ -373,6 +398,9 @@
         const totalSegments = 59;
         const segmentList = document.getElementById('segmentList');
         const summaryContent = document.getElementById('summaryContent');
+
+        // 添加全局变量来跟踪当前段落
+        let currentSegmentNumber = null;
 
         // 生成段落列表
         for (let i = 1; i <= totalSegments; i++) {
@@ -416,6 +444,7 @@
 
         // 显示段落内容和分析结果
         async function showSegmentContent(segmentNumber) {
+            currentSegmentNumber = parseInt(segmentNumber);
             // 读取原文段落
             const originalContent = await fetchFileContent(`./book_segment/segment_${segmentNumber}.txt`);
             
@@ -467,17 +496,29 @@
             "这个理论的实践意义是什么"
         ];
 
-        // 修改文本选择事件处理
-        document.addEventListener('mouseup', function() {
+        // 修改文本选择事件处理，添加获取相邻段落的逻辑
+        document.addEventListener('mouseup', async function() {
             const selectedText = window.getSelection().toString().trim();
             if (selectedText && selectedText.length > 0) {
                 const chatContainer = document.getElementById('chatContainer');
-                chatContainer.classList.add('active');  // 使用新的激活方式
+                chatContainer.classList.add('active');
                 
-                // 存储当前选中的文本和上下文
+                // 获取相邻段落的内容
+                let contextContent = '';
+                const adjacentRange = parseInt(document.querySelector('input[name="adjacentRange"]:checked').value); // 从单选框获取值
+                
+                for (let i = currentSegmentNumber - adjacentRange; i <= currentSegmentNumber + adjacentRange; i++) {
+                    if (i >= 1 && i <= totalSegments) {
+                        const segmentNumber = String(i).padStart(3, '0');
+                        const content = await fetchFileContent(`./book_segment/segment_${segmentNumber}.txt`);
+                        contextContent += `\n--- 段落 ${segmentNumber} ---\n${content}\n`;
+                    }
+                }
+                
+                // 存储当前选中的文本和扩展的上下文
                 window.selectedContext = {
                     text: selectedText,
-                    original: document.querySelector('.summary-content pre').textContent
+                    original: contextContent
                 };
 
                 // 显示提示词选择下拉框
