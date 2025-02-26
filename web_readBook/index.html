@@ -504,26 +504,43 @@
                 chatContainer.classList.add('active');
                 
                 // 获取相邻段落的内容
-                let contextContent = '';
-                const adjacentRange = parseInt(document.querySelector('input[name="adjacentRange"]:checked').value); // 从单选框获取值
+                await updateSelectedContext(selectedText);
                 
-                for (let i = currentSegmentNumber - adjacentRange; i <= currentSegmentNumber + adjacentRange; i++) {
-                    if (i >= 1 && i <= totalSegments) {
-                        const segmentNumber = String(i).padStart(3, '0');
-                        const content = await fetchFileContent(`./book_segment/segment_${segmentNumber}.txt`);
-                        contextContent += `\n--- 段落 ${segmentNumber} ---\n${content}\n`;
-                    }
-                }
-                
-                // 存储当前选中的文本和扩展的上下文
-                window.selectedContext = {
-                    text: selectedText,
-                    original: contextContent
-                };
-
                 // 显示提示词选择下拉框
                 updatePromptSelect();
             }
+        });
+
+        // 新增函数：更新选中的上下文
+        async function updateSelectedContext(selectedText) {
+            let contextContent = '';
+            const adjacentRange = parseInt(document.querySelector('input[name="adjacentRange"]:checked').value);
+            
+            for (let i = currentSegmentNumber - adjacentRange; i <= currentSegmentNumber + adjacentRange; i++) {
+                if (i >= 1 && i <= totalSegments) {
+                    const segmentNumber = String(i).padStart(3, '0');
+                    const content = await fetchFileContent(`./book_segment/segment_${segmentNumber}.txt`);
+                    contextContent += `\n--- 段落 ${segmentNumber} ---\n${content}\n`;
+                }
+            }
+            
+            // 存储当前选中的文本和扩展的上下文
+            window.selectedContext = {
+                text: selectedText,
+                original: contextContent
+            };
+            
+            return contextContent;
+        }
+
+        // 添加上下文范围单选按钮的事件监听器
+        document.querySelectorAll('input[name="adjacentRange"]').forEach(radio => {
+            radio.addEventListener('change', async function() {
+                // 如果已经有选中的文本，则更新上下文
+                if (window.selectedContext && window.selectedContext.text) {
+                    await updateSelectedContext(window.selectedContext.text);
+                }
+            });
         });
 
         // 修改提示词选择器的事件处理
