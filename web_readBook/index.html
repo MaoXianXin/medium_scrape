@@ -539,14 +539,14 @@ ${window.selectedContext.text}
 
             try {
                 // 这里替换为你的 API 调用
-                const response = await fetch('https://www.gptapi.us/v1/chat/completions', {
+                const response = await fetch('https://zzzzapi.com/v1/chat/completions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'sk-UFAf5Uu3rB5xqxrIC2788e2b2a62472d93Fb45A74865D4Eb'
+                        'Authorization': 'sk-noerGmiAt3J8SQdnj1UI74K4ixZhB55OUuEp6rfa85BOjVcI'
                     },
                     body: JSON.stringify({
-                        model: "gpt-4o-mini",
+                        model: "gemini-2.0-flash",
                         messages: [
                             { role: "system", content: "You are a helpful assistant." },
                             { role: "user", content: prompt }
