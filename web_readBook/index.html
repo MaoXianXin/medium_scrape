@@ -294,6 +294,31 @@
             left: 0;
             bottom: 0;
         }
+
+        /* 添加保存相关样式 */
+        .save-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .save-btn.saved {
+            background-color: #6c757d;
+        }
+
+        .chat-message {
+            position: relative;
+        }
+
+        .save-indicator {
+            color: #28a745;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -306,6 +331,8 @@
                 <div class="stat-item">压缩后Token数：43,958</div>
                 <div class="stat-item">压缩比：约1:10</div>
             </div>
+            <!-- 添加导出按钮 -->
+            <button id="exportSaved" style="margin-top: 10px;">导出保存的内容</button>
         </div>
 
         <div class="segment-container">
@@ -531,19 +558,81 @@ ${window.selectedContext.text}
                 const aiResponse = data.choices[0].message.content;
                 
                 // 修改添加AI回复到对话框的部分
+                const messageId = Date.now();
                 chatBody.innerHTML += `
                     ${chatBody.innerHTML ? '<hr style="border: 2px solid #eee; margin: 15px 0;">' : ''}
-                    <p><strong>AI:</strong></p>
-                    <div class="markdown-content">
-                        ${marked.parse(aiResponse)}
+                    <div class="chat-message" data-message-id="${messageId}">
+                        <p><strong>问题:</strong> ${userMessage}</p>
+                        <p><strong>选中文本:</strong> ${window.selectedContext.text}</p>
+                        <p><strong>AI:</strong></p>
+                        <div class="markdown-content" data-original-markdown="${aiResponse}">
+                            ${marked.parse(aiResponse)}
+                        </div>
+                        <button class="save-btn" onclick="toggleSave(${messageId})">保存</button>
+                        <span class="save-indicator" style="display: none;">已保存</span>
                     </div>
                 `;
+                
                 chatBody.scrollTop = chatBody.scrollHeight;
+                chatInput.value = '';
             } catch (error) {
                 console.error('API 调用失败:', error);
                 chatBody.innerHTML += `<p style="color: red;">发生错误，请稍后重试</p>`;
             }
         }
+
+        // 添加保存相关功能
+        let savedMessages = {};
+
+        function toggleSave(messageId) {
+            const messageElement = document.querySelector(`.chat-message[data-message-id="${messageId}"]`);
+            const saveBtn = messageElement.querySelector('.save-btn');
+            const saveIndicator = messageElement.querySelector('.save-indicator');
+            
+            if (savedMessages[messageId]) {
+                delete savedMessages[messageId];
+                saveBtn.classList.remove('saved');
+                saveBtn.textContent = '保存';
+                saveIndicator.style.display = 'none';
+            } else {
+                savedMessages[messageId] = {
+                    question: messageElement.querySelector('p:first-child').textContent,
+                    selectedText: messageElement.querySelector('p:nth-child(2)').textContent,
+                    answer: messageElement.querySelector('.markdown-content').getAttribute('data-original-markdown'),
+                    timestamp: new Date().toLocaleString()
+                };
+                saveBtn.classList.add('saved');
+                saveBtn.textContent = '取消保存';
+                saveIndicator.style.display = 'inline';
+            }
+        }
+
+        // 添加导出功能
+        document.getElementById('exportSaved').addEventListener('click', function() {
+            if (Object.keys(savedMessages).length === 0) {
+                alert('没有已保存的内容');
+                return;
+            }
+
+            let exportContent = '# 保存的对话记录\n\n';
+            for (const [id, message] of Object.entries(savedMessages)) {
+                exportContent += `## ${message.timestamp}\n\n`;
+                exportContent += `### 问题\n${message.question}\n\n`;
+                exportContent += `### 选中文本\n${message.selectedText}\n\n`;
+                exportContent += `### 回答\n${message.answer}\n\n`;
+                exportContent += '---\n\n';
+            }
+
+            const blob = new Blob([exportContent], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `对话记录_${new Date().toISOString().split('T')[0]}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
 
         // 更新 initializeResize 函数
         function initializeResize() {
