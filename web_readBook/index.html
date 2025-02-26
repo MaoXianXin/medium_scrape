@@ -599,7 +599,15 @@ ${window.selectedContext.text}
                     question: messageElement.querySelector('p:first-child').textContent,
                     selectedText: messageElement.querySelector('p:nth-child(2)').textContent,
                     answer: messageElement.querySelector('.markdown-content').getAttribute('data-original-markdown'),
-                    timestamp: new Date().toLocaleString()
+                    timestamp: new Date().toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    }).replace(/[/:\s]/g, '-')  // 替换斜杠、冒号和空格为横杠
                 };
                 saveBtn.classList.add('saved');
                 saveBtn.textContent = '取消保存';
@@ -627,7 +635,16 @@ ${window.selectedContext.text}
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `对话记录_${new Date().toISOString().split('T')[0]}.md`;
+            const timestamp = new Date().toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }).replace(/[/:\s]/g, '-');  // 替换斜杠、冒号和空格为横杠
+            a.download = `对话记录_${timestamp}.md`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
