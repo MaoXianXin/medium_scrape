@@ -615,14 +615,22 @@ def main():
     output_dir = "analysis_results"
     os.makedirs(output_dir, exist_ok=True)
     
+    # 处理记录文件路径
+    processed_record_file = "processed_files.txt"
+    
+    # 读取已处理文件记录
+    processed_files = set()
+    if os.path.exists(processed_record_file):
+        with open(processed_record_file, 'r', encoding='utf-8') as f:
+            processed_files = set(line.strip() for line in f if line.strip())
+    
     # 处理每个txt文件
     for file_name in txt_files:
         file_path = os.path.join(folder_path, file_name)
         file_prefix = os.path.splitext(file_name)[0]
         
         # 检查是否已经分析过
-        complete_analysis_file = os.path.join(output_dir, f"{file_prefix}_complete_analysis.txt")
-        if os.path.exists(complete_analysis_file):
+        if file_name in processed_files:
             print(f"\n文件 {file_name} 已经分析过，跳过处理")
             continue
             
@@ -645,6 +653,10 @@ def main():
         if result is None:
             print(f"由于文章长度问题跳过分析: {file_name}")
             continue
+        
+        # 将处理过的文件添加到记录中
+        with open(processed_record_file, 'a', encoding='utf-8') as f:
+            f.write(f"{file_name}\n")
         
         # 打印结果
         print("\n文章摘要:", result['summary'])
