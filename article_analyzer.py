@@ -517,6 +517,10 @@ class ArticleAnalyzer:
             print(f"Article is too long ({token_count} tokens). Maximum allowed is 10,000 tokens.")
             return None
         
+        if token_count < 2000:
+            print(f"Article is too short ({token_count} tokens). Minimum required is 2,000 tokens.")
+            return None
+        
         # 1. 文章分段
         segments = self.segment_article(article)
         
@@ -601,17 +605,17 @@ class ArticleAnalyzer:
                 f.write("\n\n" + "=" * 50 + "\n\n")
         
         # 保存原始txt格式（如果仍需要）
-        # with open(os.path.join(output_dir, f"{prefix}complete_analysis.txt"), "w", encoding="utf-8") as f:
-        #     f.write(f"标题：{title}\n\n")
-        #     f.write("文章信息摘要：\n")
-        #     f.write(f"{brief}\n\n")
-        #     f.write("=" * 50 + "\n\n")
-        #     f.write("详细分析：\n")
-        #     for point, analysis in detailed_points.items():
-        #         f.write(f"核心观点：{point}\n")
-        #         f.write("详细分析：\n")
-        #         f.write(analysis)
-        #         f.write("\n\n" + "=" * 50 + "\n\n")
+        with open(os.path.join(output_dir, f"{prefix}complete_analysis.txt"), "w", encoding="utf-8") as f:
+            f.write(f"标题：{title}\n\n")
+            f.write("文章信息摘要：\n")
+            f.write(f"{brief}\n\n")
+            f.write("=" * 50 + "\n\n")
+            f.write("详细分析：\n")
+            for point, analysis in detailed_points.items():
+                f.write(f"核心观点：{point}\n")
+                f.write("详细分析：\n")
+                f.write(analysis)
+                f.write("\n\n" + "=" * 50 + "\n\n")
         
         return {
             'title': title,
@@ -633,7 +637,7 @@ def main():
     )
     
     # 获取文件夹路径
-    folder_path = input("请输入txt文件所在文件夹路径: ").strip()
+    folder_path = "/home/mao/workspace/medium_scrape/articles"
     if not os.path.exists(folder_path):
         print(f"错误：找不到文件夹 '{folder_path}'")
         return
