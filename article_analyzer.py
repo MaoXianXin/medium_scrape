@@ -92,6 +92,7 @@ import json
 import tiktoken
 import hashlib
 import time
+import random
 
 class ArticleAnalyzer:
     def __init__(self, openai_api_key, model="gpt-4-turbo", temperature=0.3, base_url=None, max_tokens_per_segment=2000):
@@ -567,8 +568,27 @@ class ArticleAnalyzer:
         #         f.write(analysis)
         #         f.write("\n\n" + "=" * 50 + "\n\n")
         
-        # 保存完整内容到单个文件
-        with open(os.path.join(output_dir, f"{prefix}complete_analysis.txt"), "w", encoding="utf-8") as f:
+        # 随机选择一个图片URL
+        image_urls = [
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/test_imgs/2025-03-03_14-45.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/test_imgs/2025-03-03_14-45.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/test_imgs/2025-03-03_14-45.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/test_imgs/2025-03-03_14-45.png"
+        ]
+        
+        random_image = random.choice(image_urls)
+        
+        # 保存为Markdown格式
+        with open(os.path.join(output_dir, f"{prefix}complete_analysis.md"), "w", encoding="utf-8") as f:
+            # 添加frontmatter
+            f.write("---\n")
+            f.write(f"title: {title}\n")
+            f.write("tags: [人工智能]\n")
+            f.write(f"description: {brief}\n")
+            f.write(f"image: {random_image}\n")
+            f.write("---\n\n")
+            
+            # 添加标题和摘要
             f.write(f"标题：{title}\n\n")
             f.write("文章信息摘要：\n")
             f.write(f"{brief}\n\n")
@@ -579,6 +599,19 @@ class ArticleAnalyzer:
                 f.write("详细分析：\n")
                 f.write(analysis)
                 f.write("\n\n" + "=" * 50 + "\n\n")
+        
+        # 保存原始txt格式（如果仍需要）
+        # with open(os.path.join(output_dir, f"{prefix}complete_analysis.txt"), "w", encoding="utf-8") as f:
+        #     f.write(f"标题：{title}\n\n")
+        #     f.write("文章信息摘要：\n")
+        #     f.write(f"{brief}\n\n")
+        #     f.write("=" * 50 + "\n\n")
+        #     f.write("详细分析：\n")
+        #     for point, analysis in detailed_points.items():
+        #         f.write(f"核心观点：{point}\n")
+        #         f.write("详细分析：\n")
+        #         f.write(analysis)
+        #         f.write("\n\n" + "=" * 50 + "\n\n")
         
         return {
             'title': title,
