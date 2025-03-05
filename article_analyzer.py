@@ -216,11 +216,11 @@ class ArticleAnalyzer:
         summary = chain.invoke({"article": article}).content
         
         # 保存对话记录
-        self._save_conversation(
-            prompt=summary_prompt.format(article=article),
-            response=summary,
-            conversation_type="summary"
-        )
+        # self._save_conversation(
+        #     prompt=summary_prompt.format(article=article),
+        #     response=summary,
+        #     conversation_type="summary"
+        # )
         
         return summary
 
@@ -550,22 +550,22 @@ class ArticleAnalyzer:
         prefix = f"{file_prefix}_" if file_prefix else ""
         
         # 保存摘要
-        with open(os.path.join(output_dir, f"{prefix}summary.txt"), "w", encoding="utf-8") as f:
-            f.write(full_summary)
+        # with open(os.path.join(output_dir, f"{prefix}summary.txt"), "w", encoding="utf-8") as f:
+        #     f.write(full_summary)
         
         # 保存核心观点
-        with open(os.path.join(output_dir, f"{prefix}core_points.txt"), "w", encoding="utf-8") as f:
-            for point in consolidated_points:
-                f.write(f"{point}\n")
-                f.write("-" * 50 + "\n")
+        # with open(os.path.join(output_dir, f"{prefix}core_points.txt"), "w", encoding="utf-8") as f:
+        #     for point in consolidated_points:
+        #         f.write(f"{point}\n")
+        #         f.write("-" * 50 + "\n")
         
         # 保存详细分析
-        with open(os.path.join(output_dir, f"{prefix}detailed_points.txt"), "w", encoding="utf-8") as f:
-            for point, analysis in detailed_points.items():
-                f.write(f"核心观点：{point}\n")
-                f.write("详细分析：\n")
-                f.write(analysis)
-                f.write("\n\n" + "=" * 50 + "\n\n")
+        # with open(os.path.join(output_dir, f"{prefix}detailed_points.txt"), "w", encoding="utf-8") as f:
+        #     for point, analysis in detailed_points.items():
+        #         f.write(f"核心观点：{point}\n")
+        #         f.write("详细分析：\n")
+        #         f.write(analysis)
+        #         f.write("\n\n" + "=" * 50 + "\n\n")
         
         # 保存完整内容到单个文件
         with open(os.path.join(output_dir, f"{prefix}complete_analysis.txt"), "w", encoding="utf-8") as f:

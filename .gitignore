@@ -16,3 +16,15 @@ article_summaries/
 knowledge_frameworks/
 
 generated_articles-backup/
+
+analysis_results/
+
+Tools/book_segment/
+
+web_readBook/book_segment/
+
+web_readBook/summary_results/
+
+conversation_history-20250212.tar
+
+*.tar
