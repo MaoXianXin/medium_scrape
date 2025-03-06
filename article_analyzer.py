@@ -575,9 +575,19 @@ class ArticleAnalyzer:
         # 随机选择一个图片URL
         image_urls = [
             "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/test_imgs/2025-03-03_14-45.png",
-            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/test_imgs/2025-03-03_14-45.png",
-            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/test_imgs/2025-03-03_14-45.png",
-            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/test_imgs/2025-03-03_14-45.png"
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/ai/20250306092044.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/ai/20250306092152.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/ai/20250306092255.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/ai/20250306101020.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/ai/20250306101128.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/ai/20250306101228.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/ai/20250306101358.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/ai/20250306101447.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/ai/20250306141735.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/ai/20250306141825.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/ai/20250306141927.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/ai/20250306142001.png",
+            "https://maoxianxin1996.oss-cn-huhehaote.aliyuncs.com/ai/20250306142306.png"
         ]
         
         random_image = random.choice(image_urls)
