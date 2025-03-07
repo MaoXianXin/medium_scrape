@@ -1,0 +1,15 @@
+https://medium.com/@bijit211987/top-nvidia-gpus-for-llm-inference-8a5316184a10
+https://medium.com/@bijit211987/from-prompting-to-thinking-the-cognitive-engine-60f8d0cb5d54
+https://medium.com/@bijit211987/optimizing-llms-for-cost-087e923c7fd0
+https://medium.com/@bijit211987/maximizing-gpu-efficiency-for-fine-tuned-and-rag-language-models-ee6d63526859
+https://medium.com/@bijit211987/why-you-need-synthetic-data-for-machine-learning-71e10405ee7e
+https://medium.com/@bijit211987/hybridrag-0a48228dd97c
+https://medium.com/@bijit211987/agentic-security-framework-1c253af8a223
+https://medium.com/@bijit211987/ai-agent-blueprint-from-reflection-to-action-06ad05410253
+https://medium.com/@bijit211987/roadmap-to-becoming-an-ai-engineer-02de0bca001e
+https://medium.com/@bijit211987/ai-networking-for-llms-cd4554d9cb7c
+https://medium.com/@bijit211987/ai-powered-multi-agent-trading-workflow-90722a2ada3b
+https://medium.com/@bijit211987/building-your-own-llm-hindigpt-c3bf71716077
+https://medium.com/@bijit211987/deep-reinforcement-learning-in-continuous-learning-32434bc39b2f
+https://medium.com/@bijit211987/skorch-the-bridge-between-pytorch-and-scikit-learn-9ca5632d4da3
+https://medium.com/@bijit211987/deploying-graph-rag-in-production-92cd8fff48db

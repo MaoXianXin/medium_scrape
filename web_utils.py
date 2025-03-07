@@ -11,10 +11,17 @@ DEFAULT_ARTICLES_DIR = 'articles'
 DEFAULT_URLS_FILE = 'article_urls.txt'
 DEFAULT_PROCESSED_URLS_FILE = 'processed_urls.txt'  # 新增：已处理URL的记录文件
 
-def init_driver(chrome_driver_path, chrome_binary_path):
+def init_driver(chrome_driver_path, chrome_binary_path, use_remote_debugging=False, debugging_port=9222):
     """初始化并返回配置好的Chrome WebDriver"""
     chrome_options = Options()
-    chrome_options.binary_location = chrome_binary_path
+    
+    if use_remote_debugging:
+        # 连接到已运行的Chrome实例
+        chrome_options.add_experimental_option("debuggerAddress", f"localhost:{debugging_port}")
+    else:
+        # 使用常规方式启动新的Chrome实例
+        chrome_options.binary_location = chrome_binary_path
+    
     service = Service(chrome_driver_path)
     return webdriver.Chrome(service=service, options=chrome_options)
 

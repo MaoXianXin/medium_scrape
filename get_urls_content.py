@@ -10,8 +10,19 @@ from web_utils import (
 )
 import time
 import sys
+import argparse
 
+
+"""
+python get_urls_content.py --remote-debugging --port 9222
+"""
 def main():
+    # 解析命令行参数
+    parser = argparse.ArgumentParser(description='抓取Medium文章内容')
+    parser.add_argument('--remote-debugging', action='store_true', help='连接到已运行的Chrome实例')
+    parser.add_argument('--port', type=int, default=9222, help='Chrome远程调试端口 (默认: 9222)')
+    args = parser.parse_args()
+    
     # 配置路径
     chrome_driver_path = "/home/mao/Downloads/chromedriver-linux64/chromedriver"
     chrome_binary_path = "/home/mao/Downloads/chrome-linux64/chrome"
@@ -28,10 +39,15 @@ def main():
     create_articles_directory(ARTICLES_DIR)
     
     # 初始化浏览器
-    driver = init_driver(chrome_driver_path, chrome_binary_path)
+    if args.remote_debugging:
+        driver = init_driver(chrome_driver_path, chrome_binary_path, 
+                            use_remote_debugging=True, debugging_port=args.port)
+        print(f"已连接到端口 {args.port} 的Chrome实例")
+    else:
+        driver = init_driver(chrome_driver_path, chrome_binary_path)
+        # 等待用户登录并确认
+        input("请在浏览器中完成登录，完成后按回车键继续...")
     
-    # 等待用户登录并确认
-    input("请在浏览器中完成登录，完成后按回车键继续...")
     print("开始抓取文章...")
     
     try:
