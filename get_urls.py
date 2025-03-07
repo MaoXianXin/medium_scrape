@@ -3,7 +3,8 @@ from web_utils import (
     save_urls_to_file, 
     extract_article_urls,
     DEFAULT_URLS_FILE,
-    DEFAULT_ARTICLES_DIR
+    DEFAULT_ARTICLES_DIR,
+    DEFAULT_PROCESSED_URLS_FILE  # 新增导入
 )
 
 # 设置路径
@@ -13,6 +14,7 @@ chrome_appimage_path = "/home/mao/Downloads/chrome-linux64/chrome"
 # 配置文件路径
 ARTICLES_DIR = DEFAULT_ARTICLES_DIR  # 使用默认值，也可以自定义
 URLS_FILE = DEFAULT_URLS_FILE  # 使用默认值，也可以自定义
+PROCESSED_URLS_FILE = DEFAULT_PROCESSED_URLS_FILE  # 新增：已处理URL文件
 
 def main():
     driver = init_driver(chrome_driver_path, chrome_appimage_path)
@@ -36,7 +38,7 @@ def main():
             print(url)
 
         # 保存结果
-        skipped_count = save_urls_to_file(article_urls, URLS_FILE, ARTICLES_DIR)
+        skipped_count = save_urls_to_file(article_urls, URLS_FILE, PROCESSED_URLS_FILE)
         print(f"\n找到 {len(article_urls)} 篇文章，其中 {skipped_count} 篇已存在")
         print(f"新文章链接已保存到 {URLS_FILE}")
 

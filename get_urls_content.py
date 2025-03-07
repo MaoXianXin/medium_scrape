@@ -5,7 +5,8 @@ from web_utils import (
     save_article,
     remove_url_from_file,
     DEFAULT_ARTICLES_DIR,
-    DEFAULT_URLS_FILE
+    DEFAULT_URLS_FILE,
+    DEFAULT_PROCESSED_URLS_FILE
 )
 import time
 import sys
@@ -18,6 +19,7 @@ def main():
     # 配置文件路径
     ARTICLES_DIR = DEFAULT_ARTICLES_DIR  # 使用默认值，也可以自定义
     URLS_FILE = DEFAULT_URLS_FILE  # 使用默认值，也可以自定义
+    PROCESSED_URLS_FILE = DEFAULT_PROCESSED_URLS_FILE  # 添加这个配置
     
     # 设置请求间隔时间（秒）- 每分钟6篇文章
     REQUEST_INTERVAL = 10
@@ -37,6 +39,17 @@ def main():
         with open(URLS_FILE, 'r', encoding='utf-8') as f:
             urls = [line.strip() for line in f if line.strip()]
         
+        # 读取已处理的URLs
+        processed_urls = set()
+        try:
+            with open(PROCESSED_URLS_FILE, 'r', encoding='utf-8') as f:
+                processed_urls = {line.strip() for line in f}
+        except FileNotFoundError:
+            pass
+            
+        # 过滤掉已处理的URLs
+        urls = [url for url in urls if url not in processed_urls]
+        
         # 处理每个URL
         for url in urls:
             article_id = url.split('/')[-1]
@@ -45,9 +58,9 @@ def main():
             try:
                 # 获取并保存文章内容
                 article_data = get_article_content(driver, url)
-                if save_article(article_data, article_id, ARTICLES_DIR):
+                if save_article(article_data, article_id, ARTICLES_DIR, PROCESSED_URLS_FILE):
                     print(f"文章已保存: {article_id}")
-                    remove_url_from_file(url, URLS_FILE)  # 移除已处理的URL
+                    remove_url_from_file(url, URLS_FILE)
             except Exception as e:
                 print(f"处理文章时出错: {article_id}")
                 print(f"错误信息: {str(e)}")

@@ -22,3 +22,10 @@ complete-roadmap-for-learning-diffusion-models-prereqs-ddpm-stable-diffusion-dre
 a-brief-timeline-of-nlp-bc45b640f07d_complete_analysis.md	csdn	2025-03-06 14:40:59
 a-comprehensive-introduction-to-tensorflows-sequential-api-and-model-for-deep-learning-c5e31aee49fa_complete_analysis.md	csdn	2025-03-06 14:45:49
 a-practitioners-guide-to-retrieval-augmented-generation-rag-36fd38786a84_complete_analysis.md	csdn	2025-03-06 15:11:39
+a-real-time-retrieval-system-for-rag-on-social-media-data-9cc01d50a2a0_complete_analysis.md	csdn	2025-03-07 09:45:10
+adept-fuyu-61384ea68e99_complete_analysis.md	csdn	2025-03-07 09:58:34
+advanced-prompt-engineering-for-reducing-hallucination-bb2c8ce62fc6_complete_analysis.md	csdn	2025-03-07 10:02:53
+agentic-integration-966214d368cd_complete_analysis.md	csdn	2025-03-07 10:11:40
+agentic-process-automation-the-key-enabler-for-business-value-from-large-language-models-204dc86ed32a_complete_analysis.md	csdn	2025-03-07 10:17:40
+ai-bill-of-materials-ai-bom-80d48f9d75e0_complete_analysis.md	csdn	2025-03-07 10:19:08
+ai-readiness-in-the-data-driven-world-strategies-for-maximizing-data-value-and-roi-10db57a17579_complete_analysis.md	csdn	2025-03-07 10:26:10
