@@ -6,6 +6,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import os
 
+# 添加默认配置
+DEFAULT_ARTICLES_DIR = 'articles'
+DEFAULT_URLS_FILE = 'article_urls.txt'
+
 def init_driver(chrome_driver_path, chrome_binary_path):
     """初始化并返回配置好的Chrome WebDriver"""
     chrome_options = Options()
@@ -13,12 +17,12 @@ def init_driver(chrome_driver_path, chrome_binary_path):
     service = Service(chrome_driver_path)
     return webdriver.Chrome(service=service, options=chrome_options)
 
-def save_urls_to_file(urls, filename='article_urls.txt'):
+def save_urls_to_file(urls, filename=DEFAULT_URLS_FILE, articles_dir=DEFAULT_ARTICLES_DIR):
     """将URL列表保存到文件"""
     # 获取已存在的文章
     existing_articles = set()
     try:
-        for file in os.listdir('articles'):
+        for file in os.listdir(articles_dir):
             name, ext = os.path.splitext(file)
             if ext.lower() == '.txt':
                 existing_articles.add(name)
@@ -73,10 +77,10 @@ def extract_article_urls(driver, selector="a[rel='noopener follow']"):
     
     return article_urls
 
-def create_articles_directory():
+def create_articles_directory(articles_dir=DEFAULT_ARTICLES_DIR):
     """创建保存文章的目录"""
-    if not os.path.exists('articles'):
-        os.makedirs('articles')
+    if not os.path.exists(articles_dir):
+        os.makedirs(articles_dir)
 
 def get_article_content(driver, url):
     """获取文章内容"""
@@ -99,12 +103,12 @@ def get_article_content(driver, url):
     except Exception as e:
         raise  # 让调用者处理异常
 
-def save_article(article_data, article_id):
+def save_article(article_data, article_id, articles_dir=DEFAULT_ARTICLES_DIR):
     """保存文章内容到文件"""
     if not article_data:
         return False
     
-    filepath = os.path.join('articles', f'{article_id}.txt')
+    filepath = os.path.join(articles_dir, f'{article_id}.txt')
     try:
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(f"标题：{article_data['title']}\n\n")
@@ -117,13 +121,13 @@ def save_article(article_data, article_id):
         print(f"错误信息: {str(e)}")
         return False
 
-def remove_url_from_file(url):
+def remove_url_from_file(url, urls_file=DEFAULT_URLS_FILE):
     """从文件中移除已处理的URL"""
     try:
-        with open('article_urls.txt', 'r', encoding='utf-8') as f:
+        with open(urls_file, 'r', encoding='utf-8') as f:
             urls = f.readlines()
         
-        with open('article_urls.txt', 'w', encoding='utf-8') as f:
+        with open(urls_file, 'w', encoding='utf-8') as f:
             for line in urls:
                 if line.strip() != url.strip():
                     f.write(line)

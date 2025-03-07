@@ -3,7 +3,9 @@ from web_utils import (
     create_articles_directory,
     get_article_content,
     save_article,
-    remove_url_from_file
+    remove_url_from_file,
+    DEFAULT_ARTICLES_DIR,
+    DEFAULT_URLS_FILE
 )
 import time
 import sys
@@ -13,11 +15,15 @@ def main():
     chrome_driver_path = "/home/mao/Downloads/chromedriver-linux64/chromedriver"
     chrome_binary_path = "/home/mao/Downloads/chrome-linux64/chrome"
     
+    # 配置文件路径
+    ARTICLES_DIR = DEFAULT_ARTICLES_DIR  # 使用默认值，也可以自定义
+    URLS_FILE = DEFAULT_URLS_FILE  # 使用默认值，也可以自定义
+    
     # 设置请求间隔时间（秒）- 每分钟6篇文章
     REQUEST_INTERVAL = 10
     
     # 创建文章保存目录
-    create_articles_directory()
+    create_articles_directory(ARTICLES_DIR)
     
     # 初始化浏览器
     driver = init_driver(chrome_driver_path, chrome_binary_path)
@@ -28,7 +34,7 @@ def main():
     
     try:
         # 读取文章URL列表
-        with open('article_urls.txt', 'r', encoding='utf-8') as f:
+        with open(URLS_FILE, 'r', encoding='utf-8') as f:
             urls = [line.strip() for line in f if line.strip()]
         
         # 处理每个URL
@@ -39,9 +45,9 @@ def main():
             try:
                 # 获取并保存文章内容
                 article_data = get_article_content(driver, url)
-                if save_article(article_data, article_id):
+                if save_article(article_data, article_id, ARTICLES_DIR):
                     print(f"文章已保存: {article_id}")
-                    remove_url_from_file(url)  # 移除已处理的URL
+                    remove_url_from_file(url, URLS_FILE)  # 移除已处理的URL
             except Exception as e:
                 print(f"处理文章时出错: {article_id}")
                 print(f"错误信息: {str(e)}")
