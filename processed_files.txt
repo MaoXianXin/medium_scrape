@@ -659,3 +659,14 @@ papers-explained-151-aya-23-d01605c3ee80.txt
 a-78x-faster-frontier-model-the-new-amazing-ai-breakthrough-775d2327dc16.txt
 vector-representations-for-machine-learning-5047c50aaeff.txt
 an-ai-has-come-back-from-the-dead-ec90592022d8.txt
+papers-explained-170-prometheus-5e72b8054729.txt
+streaming-your-batches-1df297c669a5.txt
+your-it-department-wont-exist-in-2030-2cb184f618c1.txt
+leveraging-ai-to-create-better-datasets-for-ai-the-fineweb-approach-by-huggingface-89c94ea38a40.txt
+overcoming-security-challenges-in-protecting-shared-generative-ai-environments-1ffb27da1bde.txt
+is-mamba-the-end-of-chatgpt-as-we-know-it-a2ce57de0b02.txt
+llms-will-always-hallucinate-b06f3353b159.txt
+combine-multiple-lora-adapters-for-llama-2-ea0bef9025cf.txt
+jamba-the-new-hybrid-transformer-mamba-f18ee6ce0768.txt
+enriching-language-models-with-knowledge-graphs-for-powerful-question-answering-3c08b3b8020f.txt
+papers-explained-142-gemini-1-5-flash-415e2dc6a989.txt
