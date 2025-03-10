@@ -28,3 +28,7 @@ web_readBook/summary_results/
 conversation_history-20250212.tar
 
 *.tar
+
+summary_results/
+
+conversation_history/
