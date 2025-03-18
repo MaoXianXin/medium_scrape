@@ -206,3 +206,17 @@ do-llms-really-understand-maths-no-dbd46cf464fa_complete_analysis.md	zhihu	2025-
 following-apple-signal-zoom-moves-to-post-quantum-cryptography-is-classical-cryptography-dying-7ab346aa365b_complete_analysis.md	zhihu	2025-03-17 11:34:29
 googles-new-algorithms-just-made-searching-vector-databases-faster-than-ever-36073618d078_complete_analysis.md	zhihu	2025-03-17 11:35:57
 huatuogpt-o1-a-medical-reasoning-llm-with-openai-o1-like-capabilities-is-here-76ec7cc838df_complete_analysis.md	zhihu	2025-03-17 11:37:24
+3-leetcode-one-liners-that-look-easy-but-can-make-one-p-ss-their-pants-in-a-tech-interview-aaed4d586782_complete_analysis.md	csdn	2025-03-18 10:26:48
+a-human-brain-inspired-rag-approach-has-reached-the-new-state-of-the-art-ab6b765a27eb_complete_analysis.md	csdn	2025-03-18 10:28:13
+a-squad-of-open-source-llms-can-now-beat-the-closed-source-gpt-4o-86ebed788102_complete_analysis.md	csdn	2025-03-18 10:31:28
+an-llm-with-a-visual-sketchpad-can-now-smash-its-competitors-without-one-5bf00e7dd929_complete_analysis.md	csdn	2025-03-18 10:32:53
+bend-a-rust-backed-language-that-supercharges-parallel-computing-like-never-before-3e603f5eed9c_complete_analysis.md	csdn	2025-03-18 10:34:18
+deepseek-r1-beats-openais-o1-revealing-all-its-training-secrets-out-in-the-open-37f16f0990ec_complete_analysis.md	csdn	2025-03-18 10:35:43
+hold-tight-nuclear-fusion-is-coming-sooner-than-you-think-thanks-to-artificial-intelligence-16e69127ba68_complete_analysis.md	csdn	2025-03-18 10:37:08
+i-learned-both-rust-go-to-find-out-which-one-was-better-spoiler-alert-its-rust-573e0def4978_complete_analysis.md	csdn	2025-03-18 10:38:34
+kolmogorov-arnold-networks-might-change-ai-as-we-know-it-forever-8b6ffdfe9eae_complete_analysis.md	csdn	2025-03-18 10:39:59
+memory-layers-are-supercharging-llms-like-never-before-056b99ea75cd_complete_analysis.md	csdn	2025-03-18 10:41:24
+multi-head-latent-attention-is-the-powerful-engine-behind-deepseek-0ecfd29e0b04_complete_analysis.md	csdn	2025-03-18 10:42:49
+stable-signature-metas-solution-to-end-misinformation-spread-with-ai-generated-images-abe4ecfd5aec_complete_analysis.md	csdn	2025-03-18 10:44:14
+superfast-matrix-multiplication-free-llms-are-finally-here-cac5b78a4fa7_complete_analysis.md	csdn	2025-03-18 10:45:40
+the-new-adam-mini-optimizer-is-here-to-cause-a-breakthrough-in-ai-6b0ba252ae36_complete_analysis.md	csdn	2025-03-18 10:47:08

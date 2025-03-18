@@ -796,3 +796,13 @@ xnets-are-here-to-outcompete-mlps-kans-3ff569819165.txt
 i-learned-both-rust-go-to-find-out-which-one-was-better-spoiler-alert-its-rust-573e0def4978.txt
 ai-can-now-look-at-your-heart-predict-how-long-youll-live-23770010be0b.txt
 following-apple-signal-zoom-moves-to-post-quantum-cryptography-is-classical-cryptography-dying-7ab346aa365b.txt
+3-leetcode-one-liners-that-look-easy-but-can-make-one-p-ss-their-pants-in-a-tech-interview-aaed4d586782.txt
+a-squad-of-open-source-llms-can-now-beat-the-closed-source-gpt-4o-86ebed788102.txt
+a-human-brain-inspired-rag-approach-has-reached-the-new-state-of-the-art-ab6b765a27eb.txt
+memory-layers-are-supercharging-llms-like-never-before-056b99ea75cd.txt
+vision-transformers-completely-redefine-how-ai-perceives-the-real-world-e3a06b826760.txt
+bend-a-rust-backed-language-that-supercharges-parallel-computing-like-never-before-3e603f5eed9c.txt
+an-llm-with-a-visual-sketchpad-can-now-smash-its-competitors-without-one-5bf00e7dd929.txt
+deepseek-r1-beats-openais-o1-revealing-all-its-training-secrets-out-in-the-open-37f16f0990ec.txt
+multi-head-latent-attention-is-the-powerful-engine-behind-deepseek-0ecfd29e0b04.txt
+hold-tight-nuclear-fusion-is-coming-sooner-than-you-think-thanks-to-artificial-intelligence-16e69127ba68.txt
