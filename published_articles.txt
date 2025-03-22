@@ -220,3 +220,13 @@ multi-head-latent-attention-is-the-powerful-engine-behind-deepseek-0ecfd29e0b04_
 stable-signature-metas-solution-to-end-misinformation-spread-with-ai-generated-images-abe4ecfd5aec_complete_analysis.md	csdn	2025-03-18 10:44:14
 superfast-matrix-multiplication-free-llms-are-finally-here-cac5b78a4fa7_complete_analysis.md	csdn	2025-03-18 10:45:40
 the-new-adam-mini-optimizer-is-here-to-cause-a-breakthrough-in-ai-6b0ba252ae36_complete_analysis.md	csdn	2025-03-18 10:47:08
+transfusion-is-supercharging-training-multi-modal-llms-like-never-before-a8c112c4194b_complete_analysis.md	csdn	2025-03-21 09:38:34
+vision-transformers-completely-redefine-how-ai-perceives-the-real-world-e3a06b826760_complete_analysis.md	csdn	2025-03-21 09:40:02
+we-have-finally-found-a-solution-to-an-extremely-energy-efficient-ai-73ed2537e53f_complete_analysis.md	csdn	2025-03-21 09:41:31
+why-scaling-is-popular-in-ai-1a3d304166e1_complete_analysis.md	csdn	2025-03-21 09:42:59
+will-diffusion-models-be-the-next-frontier-of-deep-learning-7172bea88581_complete_analysis.md	csdn	2025-03-21 09:44:24
+5-rust-features-that-are-confusing-for-python-javascript-developers-but-are-game-changers-7d322815d789_complete_analysis.md	csdn	2025-03-21 10:48:11
+an-ai-can-now-operate-your-computer-and-its-being-built-open-source-be34a3e82c00_complete_analysis.md	csdn	2025-03-21 10:49:36
+here-is-google-deepminds-new-research-to-build-massive-llms-with-a-mixture-of-million-experts-5a13e4f6dd29_complete_analysis.md	csdn	2025-03-21 10:51:01
+is-openais-o1-the-ai-doctor-we-ve-always-been-waiting-for-surprisingly-yes-49ca83cc2699_complete_analysis.md	csdn	2025-03-21 10:52:26
+rnns-are-coming-back-to-take-over-transformers-yes-for-real-51697943bc67_complete_analysis.md	csdn	2025-03-21 10:53:51
