@@ -59,8 +59,11 @@ if 'summary' in summarize_result:
     if 'main_points' in extract_result:
         main_points_file = os.path.join(output_dir, f"{article_id}_main_points.md")
         
+        # 将列表转换为字符串格式
+        main_points_text = "\n\n".join([f"- {point}" for point in extract_result['main_points']])
+        
         with open(main_points_file, 'w', encoding='utf-8') as f:
-            f.write(extract_result['main_points'])
+            f.write(main_points_text)
         
         print(f"Main points saved to {main_points_file}")
     else:

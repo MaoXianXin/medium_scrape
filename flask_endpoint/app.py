@@ -3,6 +3,7 @@ from summarizer import summarize_article
 from extract_main_points import extract_article_main_points
 import os
 from concurrent.futures import ThreadPoolExecutor
+import json
 
 app = Flask(__name__)
 # 创建线程池来处理并发请求
@@ -84,15 +85,29 @@ def extract_main_points_api():
         
         result = future.result()  # 等待结果
         
+        # 处理主要观点数据
         if return_tokens:
             main_points, token_info = result
-            return jsonify({
-                "main_points": main_points,
-                "token_info": token_info
-            })
         else:
             main_points = result
-            return jsonify({"main_points": main_points})
+            token_info = None
+            
+        # 尝试解析JSON字符串，避免嵌套
+        try:
+            main_points_obj = json.loads(main_points)
+            # 检查是否是字典且包含main_points键
+            if isinstance(main_points_obj, dict) and "main_points" in main_points_obj:
+                main_points = main_points_obj["main_points"]
+        except (json.JSONDecodeError, TypeError):
+            # 如果解析失败，保留原始字符串
+            pass
+            
+        # 构建响应
+        response = {"main_points": main_points}
+        if token_info:
+            response["token_info"] = token_info
+            
+        return jsonify(response)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
