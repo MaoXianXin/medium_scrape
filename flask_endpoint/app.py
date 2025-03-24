@@ -1,8 +1,11 @@
 from flask import Flask, request, jsonify
 from article_summarizer import summarize_article
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 app = Flask(__name__)
+# 创建线程池来处理并发请求
+executor = ThreadPoolExecutor(max_workers=10)
 
 @app.route('/api/summarize', methods=['POST'])
 def api_summarize_article():
@@ -23,32 +26,32 @@ def api_summarize_article():
     
     # 调用总结函数
     try:
+        # 使用线程池异步处理请求
+        future = executor.submit(
+            summarize_article,
+            article_text=article_text,
+            api_key=api_key,
+            return_tokens=return_tokens,
+            temperature=temperature,
+            base_url=base_url,
+            model=model
+        )
+        
+        result = future.result()  # 等待结果
+        
         if return_tokens:
-            summary, token_info = summarize_article(
-                article_text=article_text,
-                api_key=api_key,
-                return_tokens=True,
-                temperature=temperature,
-                base_url=base_url,
-                model=model
-            )
+            summary, token_info = result
             return jsonify({
                 "summary": summary,
                 "token_info": token_info
             })
         else:
-            summary = summarize_article(
-                article_text=article_text,
-                api_key=api_key,
-                return_tokens=False,
-                temperature=temperature,
-                base_url=base_url,
-                model=model
-            )
+            summary = result
             return jsonify({"summary": summary})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     # 在生产环境中，你应该使用正确的WSGI服务器
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # 使用多线程模式运行Flask
+    app.run(debug=True, host='0.0.0.0', port=5000, threaded=True)
