@@ -58,7 +58,7 @@ def summarize_article(article_text, api_key=None, return_tokens=False, temperatu
     )
     
     # 创建语言模型
-    model = ChatOpenAI(
+    llm = ChatOpenAI(
         temperature=temperature,
         api_key=api_key,
         base_url=base_url,
@@ -69,7 +69,7 @@ def summarize_article(article_text, api_key=None, return_tokens=False, temperatu
     output_parser = StrOutputParser()
     
     # 构建处理链
-    chain = prompt | model | output_parser
+    chain = prompt | llm | output_parser
     
     # 使用回调来跟踪token使用情况
     with get_openai_callback() as cb:
@@ -101,10 +101,10 @@ if __name__ == "__main__":
     # 获取总结和token信息
     summary, token_info = summarize_article(
         article_text=sample_article,
-        api_key="sk-UxCneocSvk83jPkSmDRyYZA2zLWiAX1Ds71JVK72IqH1DiR6",
+        api_key="sk-GUtb3hUr2MSiUifp343823B7632f412294078bD5A0DcF3C7",
         return_tokens=True,
-        temperature=0.2,
-        base_url="https://zzzzapi.com/v1",
+        temperature=0.1,
+        base_url="https://www.gptapi.us/v1",
         model="deepseek-r1"
     )
     print(summary)
