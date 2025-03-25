@@ -2,9 +2,36 @@ from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 import re
-from langchain_community.callbacks.manager import get_openai_callback
 
-def summarize_article(article_text, api_key=None, return_tokens=False, temperature=0.1, base_url="https://zzzzapi.com/v1", model="gpt-4o-mini"):
+def summarize_article(article_text, api_key=None, temperature=0.1, base_url="https://zzzzapi.com/v1", model="gpt-4o-mini"):
+    """
+    Summarizes an article using a language model to extract key points and insights.
+    
+    This function processes the provided article text through a structured prompt template
+    that extracts the article's main topic, core viewpoints, supporting arguments, 
+    secondary viewpoints, and key concepts. The summary is returned in Chinese Markdown format.
+    
+    Args:
+        article_text (str): The full text of the article to be summarized.
+        api_key (str, optional): API key for the language model service. Defaults to None.
+        temperature (float, optional): Controls randomness in the model's output. 
+            Lower values make output more deterministic. Defaults to 0.1.
+        base_url (str, optional): Base URL for the API endpoint. Defaults to "https://zzzzapi.com/v1".
+        model (str, optional): The language model to use for summarization. Defaults to "gpt-4o-mini".
+    
+    Returns:
+        str: A structured summary of the article in Chinese, formatted in Markdown, including:
+            - Article overview (topic, purpose, structure)
+            - Core viewpoints extraction
+            - Argument analysis
+            - Secondary viewpoints and supporting details
+            - Keywords and recurring concepts
+    
+    Example:
+        >>> article = "长文章内容..."
+        >>> summary = summarize_article(article, api_key="your-api-key")
+        >>> print(summary)
+    """
     # 创建提示模板
     summary_template = """
     1. 文章概述:
@@ -71,23 +98,11 @@ def summarize_article(article_text, api_key=None, return_tokens=False, temperatu
     # 构建处理链
     chain = prompt | llm | output_parser
     
-    # 使用回调来跟踪token使用情况
-    with get_openai_callback() as cb:
-        # 执行链并返回结果
-        summary = chain.invoke({"article_text": article_text})
-        
-        # 过滤掉<think>...</think>内容
-        summary = re.sub(r'<think>.*?</think>', '', summary, flags=re.DOTALL)
-        
-        # 如果需要返回token信息
-        if return_tokens:
-            token_info = {
-                "total_tokens": cb.total_tokens,
-                "prompt_tokens": cb.prompt_tokens,
-                "completion_tokens": cb.completion_tokens,
-                "total_cost": cb.total_cost
-            }
-            return summary, token_info
+    # 执行链并返回结果
+    summary = chain.invoke({"article_text": article_text})
+    
+    # 过滤掉<think>...</think>内容
+    summary = re.sub(r'<think>.*?</think>', '', summary, flags=re.DOTALL)
     
     return summary
 
@@ -98,18 +113,12 @@ if __name__ == "__main__":
     文章内容
     """
     
-    # 获取总结和token信息
-    summary, token_info = summarize_article(
+    # 获取总结
+    summary = summarize_article(
         article_text=sample_article,
         api_key="sk-GUtb3hUr2MSiUifp343823B7632f412294078bD5A0DcF3C7",
-        return_tokens=True,
         temperature=0.1,
         base_url="https://www.gptapi.us/v1",
         model="deepseek-r1"
     )
     print(summary)
-    print("\n--- Token 使用情况 ---")
-    print(f"总Token数: {token_info['total_tokens']}")
-    print(f"提示Token数: {token_info['prompt_tokens']}")
-    print(f"完成Token数: {token_info['completion_tokens']}")
-    print(f"总成本: ${token_info['total_cost']:.6f}")
