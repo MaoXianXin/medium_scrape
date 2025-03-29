@@ -348,3 +348,16 @@ ai-powered-multi-agent-trading-workflow-90722a2ada3b.txt
 when-to-apply-rag-vs-fine-tuning-90a34e7d6d25.txt
 good-refactor-vs-bad-refactor-39af14582966.txt
 uncensor-any-llm-with-abliteration-d30148b7d43e.txt
+papers-explained-135-dspy-fe8af7e35091.txt
+achieving-microsoft-102-certification-mastering-microsoft-azure-ai-solution-without-a-machine-aeaf0f8c1ebc.txt
+unveiling-the-magic-behind-stable-diffusion-3-0ecc0aac365a.txt
+achieving-robust-reasoning-by-combining-neural-and-symbolic-representations-e0338b4b113a.txt
+create-a-synthetic-dataset-using-llama-3-1-405b-for-instruction-fine-tuning-9afc22fb6eef.txt
+two-minutes-generative-ai-when-will-llms-run-out-of-training-data-ff151dfb8410.txt
+beyond-mlops-llmops-and-the-future-e1f5d1c6f28c.txt
+neuro-symbolic-observability-unlocking-the-full-potential-of-rag-systems-9cdca71139fd.txt
+two-minutes-generative-ai-marco-o1-a-new-large-reasoning-model-lrm-2cbeedf9a852.txt
+why-graphs-are-the-future-heart-of-data-b5d7917a6bbf.txt
+can-you-use-the-falcon-models-for-commercial-applications-e5ad14e25cc1.txt
+speed-up-your-tensorflow-training-with-mixed-precision-on-gpu-tpu-acf4c8c0931c.txt
+claude-3-chatgpt-and-the-death-of-llms-a484b17ddeaf.txt
