@@ -1,0 +1,10 @@
+请对以下文章进行全面价值评估：
+
+文章内容：
+{article_text}
+
+文章总结：
+{summary}
+
+请按照以下评估模板进行系统评估：
+{assessment_template}
