@@ -2,6 +2,7 @@ from dialog_module.base import OneTimeDialogModule
 from dialog_module.utils import read_template_from_file, read_article_from_file, create_custom_llm
 from test_article_summary_samples import generate_article_summary
 from score_extractor import extract_assessment_scores
+import re
 
 # 定义文章价值评估模板路径
 ASSESSMENT_TEMPLATE_PATH = "templates/article_assessment_template.txt"
@@ -67,9 +68,13 @@ if __name__ == "__main__":
     
     # 先生成文章总结
     summary = generate_article_summary(article_text)
+    # 过滤掉<think>...</think>内容
+    summary = re.sub(r'<think>.*?</think>', '', summary, flags=re.DOTALL)
     
     # 生成文章评估
     assessment = generate_article_assessment(article_text, summary)
+    # 过滤掉<think>...</think>内容
+    assessment = re.sub(r'<think>.*?</think>', '', assessment, flags=re.DOTALL)
     
     # 打印评估结果
     print("文章价值评估:")
@@ -78,6 +83,8 @@ if __name__ == "__main__":
     
     # 提取评估分数
     scores = extract_assessment_scores(assessment)
+    # 过滤掉<think>...</think>内容
+    scores = re.sub(r'<think>.*?</think>', '', scores, flags=re.DOTALL)
     if scores:
         print("\n评估分数:")
         print("-" * 50)
