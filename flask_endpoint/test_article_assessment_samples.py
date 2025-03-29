@@ -1,7 +1,7 @@
-from langchain.prompts import PromptTemplate
 from dialog_module.base import OneTimeDialogModule
 from dialog_module.utils import read_template_from_file, read_article_from_file, create_custom_llm
 from test_article_summary_samples import generate_article_summary
+from score_extractor import extract_assessment_scores
 
 # 定义文章价值评估模板路径
 ASSESSMENT_TEMPLATE_PATH = "templates/article_assessment_template.txt"
@@ -75,3 +75,15 @@ if __name__ == "__main__":
     print("文章价值评估:")
     print("-" * 50)
     print(assessment)
+    
+    # 提取评估分数
+    scores = extract_assessment_scores(assessment)
+    if scores:
+        print("\n评估分数:")
+        print("-" * 50)
+        print(f"创新性得分: {scores.innovation_score}")
+        print(f"实用性得分: {scores.practicality_score}")
+        print(f"完整性得分: {scores.completeness_score}")
+        print(f"可信度得分: {scores.credibility_score}")
+        print(f"特定需求得分: {scores.specific_needs_score}")
+        print(f"最终总分: {scores.total_score}")
