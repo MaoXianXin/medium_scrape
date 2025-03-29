@@ -83,8 +83,6 @@ if __name__ == "__main__":
     
     # 提取评估分数
     scores = extract_assessment_scores(assessment)
-    # 过滤掉<think>...</think>内容
-    scores = re.sub(r'<think>.*?</think>', '', scores, flags=re.DOTALL)
     if scores:
         print("\n评估分数:")
         print("-" * 50)
