@@ -58,7 +58,8 @@ def extract_tags_from_summary(summary, template_path=None):
         template_path: 提示词模板路径，如果为None则使用默认路径
         
     返回:
-        提取的标签JSON对象，包含技术标签、主题标签、应用标签、统一标签和标签解释
+        成功时返回TagsModel对象（包含技术标签、主题标签、应用标签、统一标签和标签解释）
+        解析失败时返回原始的tags_text字符串
     """
     # 如果未提供模板路径，使用默认路径
     if template_path is None:
