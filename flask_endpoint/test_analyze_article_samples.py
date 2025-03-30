@@ -29,12 +29,12 @@ class ArticleAnalyzer:
         article_text = read_article_from_file(article_path)
         
         # 生成文章总结
-        summary = generate_article_summary(article_text)
+        summary = generate_article_summary(article_text, llm=self.custom_llm)
         # 过滤掉<think>...</think>内容
         summary = re.sub(r'<think>.*?</think>', '', summary, flags=re.DOTALL)
         
         # 从总结中提取标签
-        tags = extract_tags_from_summary(summary)
+        tags = extract_tags_from_summary(summary, llm=self.custom_llm)
         
         # 构建标签字典
         if isinstance(tags, dict) or hasattr(tags, "__dict__"):
@@ -44,12 +44,12 @@ class ArticleAnalyzer:
             tags_dict = {}
         
         # 生成文章评估
-        assessment = generate_article_assessment(article_text, summary)
+        assessment = generate_article_assessment(article_text, summary, llm=self.custom_llm)
         # 过滤掉<think>...</think>内容
         assessment = re.sub(r'<think>.*?</think>', '', assessment, flags=re.DOTALL)
         
         # 提取评估分数
-        scores = extract_assessment_scores(assessment)
+        scores = extract_assessment_scores(assessment, llm=self.custom_llm)
         
         # 构建分析结果
         result = {

@@ -13,16 +13,21 @@ class AssessmentScores(BaseModel):
     specific_needs_score: int = Field(description="特定需求得分")
     total_score: int = Field(description="最终总分")
 
-def extract_assessment_scores(assessment_report):
+def extract_assessment_scores(assessment_report, llm=None):
     """
     从评估报告中提取各个维度的得分
     
     参数:
         assessment_report: 文章评估报告文本
+        llm: 语言模型实例，如果为None则创建新实例
         
     返回:
         AssessmentScores对象，包含各个维度的得分
     """
+    # 如果未提供模型实例，创建一个新的
+    if llm is None:
+        llm = create_custom_llm()
+    
     # 创建输出解析器
     parser = PydanticOutputParser(pydantic_object=AssessmentScores)
     
@@ -50,12 +55,9 @@ def extract_assessment_scores(assessment_report):
         partial_variables={"format_instructions": parser.get_format_instructions()}
     )
     
-    # 使用自定义模型服务
-    custom_llm = create_custom_llm()
-    
     # 创建评分提取模块实例
     score_extractor = OneTimeDialogModule(
-        llm=custom_llm,
+        llm=llm,
         prompt_template=prompt.template,
         template_variables={
             "assessment_report": assessment_report,

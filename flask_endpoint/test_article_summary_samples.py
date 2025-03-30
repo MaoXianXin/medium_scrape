@@ -14,20 +14,22 @@ class TagsModel(BaseModel):
     统一标签: List[str] = Field(description="所有标签的合集，前面加#号")
     标签解释: Dict[str, str] = Field(description="每个标签的选择理由简述")
 
-# 使用自定义模型服务
-custom_llm = create_custom_llm()
-
-def generate_article_summary(article_text, template_path=None):
+def generate_article_summary(article_text, template_path=None, llm=None):
     """
     生成文章总结的函数
     
     参数:
         article_text: 文章内容文本
         template_path: 提示词模板路径，如果为None则使用默认路径
+        llm: 语言模型实例，如果为None则创建新实例
         
     返回:
         生成的文章总结
     """
+    # 如果未提供模型实例，创建一个新的
+    if llm is None:
+        llm = create_custom_llm()
+        
     # 如果未提供模板路径，使用默认路径
     if template_path is None:
         template_path = os.path.join(os.path.dirname(__file__), "templates", "article_summary_template.txt")
@@ -37,7 +39,7 @@ def generate_article_summary(article_text, template_path=None):
     
     # 创建文章总结模块实例
     article_summarizer = OneTimeDialogModule(
-        llm=custom_llm,
+        llm=llm,
         prompt_template=summary_template,
         template_variables={}  # 不预设任何模板变量
     )
@@ -49,18 +51,23 @@ def generate_article_summary(article_text, template_path=None):
     
     return summary
 
-def extract_tags_from_summary(summary, template_path=None):
+def extract_tags_from_summary(summary, template_path=None, llm=None):
     """
     从文章总结中提取关键词作为标签
     
     参数:
         summary: 文章总结文本
         template_path: 提示词模板路径，如果为None则使用默认路径
+        llm: 语言模型实例，如果为None则创建新实例
         
     返回:
         成功时返回TagsModel对象（包含技术标签、主题标签、应用标签、统一标签和标签解释）
         解析失败时返回原始的tags_text字符串
     """
+    # 如果未提供模型实例，创建一个新的
+    if llm is None:
+        llm = create_custom_llm()
+        
     # 如果未提供模板路径，使用默认路径
     if template_path is None:
         template_path = os.path.join(os.path.dirname(__file__), "templates", "extract_tags_template.txt")
@@ -73,7 +80,7 @@ def extract_tags_from_summary(summary, template_path=None):
     
     # 创建标签提取模块实例
     tag_extractor = OneTimeDialogModule(
-        llm=custom_llm,
+        llm=llm,
         prompt_template=tags_template,
         template_variables={"format_instructions": parser.get_format_instructions()}
     )
@@ -99,8 +106,11 @@ if __name__ == "__main__":
     # 读取文章内容
     article_text = read_article_from_file(file_path)
     
+    # 创建一个语言模型实例供两个函数共享
+    llm = create_custom_llm()
+    
     # 生成文章总结
-    summary = generate_article_summary(article_text)
+    summary = generate_article_summary(article_text, llm=llm)
     # 过滤掉<think>...</think>内容
     summary = re.sub(r'<think>.*?</think>', '', summary, flags=re.DOTALL)
     
@@ -110,7 +120,7 @@ if __name__ == "__main__":
     print(summary)
     
     # 从总结中提取标签
-    tags = extract_tags_from_summary(summary)
+    tags = extract_tags_from_summary(summary, llm=llm)
     
     # 打印标签
     print("\n文章标签:")

@@ -8,7 +8,7 @@ import re
 ASSESSMENT_TEMPLATE_PATH = "templates/article_assessment_template.txt"
 ASSESSMENT_PROMPT_PATH = "templates/article_assessment_prompt.txt"
 
-def generate_article_assessment(article_text, summary=None, template_path=None):
+def generate_article_assessment(article_text, summary=None, template_path=None, llm=None):
     """
     生成文章价值评估的函数
     
@@ -16,12 +16,14 @@ def generate_article_assessment(article_text, summary=None, template_path=None):
         article_text: 文章内容文本
         summary: 文章总结，如果为None则不包含总结信息
         template_path: 提示词模板路径，如果为None则使用默认模板
+        llm: 语言模型实例，如果为None则创建新实例
         
     返回:
         生成的文章价值评估报告
     """
-    # 使用自定义模型服务
-    custom_llm = create_custom_llm()
+    # 如果未提供模型实例，创建一个新的
+    if llm is None:
+        llm = create_custom_llm()
     
     # 读取评估模板
     assessment_template = read_template_from_file(ASSESSMENT_TEMPLATE_PATH)
@@ -48,7 +50,7 @@ def generate_article_assessment(article_text, summary=None, template_path=None):
     
     # 创建文章评估模块实例
     article_assessor = OneTimeDialogModule(
-        llm=custom_llm,
+        llm=llm,
         prompt_template=prompt_template,
         template_variables=template_variables
     )
@@ -66,13 +68,16 @@ if __name__ == "__main__":
     # 读取文章内容
     article_text = read_article_from_file(file_path)
     
-    # 先生成文章总结
-    summary = generate_article_summary(article_text)
+    # 创建一个语言模型实例供函数共享
+    llm = create_custom_llm()
+    
+    # 生成文章总结
+    summary = generate_article_summary(article_text, llm=llm)
     # 过滤掉<think>...</think>内容
     summary = re.sub(r'<think>.*?</think>', '', summary, flags=re.DOTALL)
     
     # 生成文章评估
-    assessment = generate_article_assessment(article_text, summary)
+    assessment = generate_article_assessment(article_text, summary, llm=llm)
     # 过滤掉<think>...</think>内容
     assessment = re.sub(r'<think>.*?</think>', '', assessment, flags=re.DOTALL)
     
@@ -82,7 +87,7 @@ if __name__ == "__main__":
     print(assessment)
     
     # 提取评估分数
-    scores = extract_assessment_scores(assessment)
+    scores = extract_assessment_scores(assessment, llm=llm)
     if scores:
         print("\n评估分数:")
         print("-" * 50)
