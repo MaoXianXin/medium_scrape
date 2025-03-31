@@ -3,6 +3,7 @@ from dialog_module.utils import read_article_from_file, create_custom_llm
 from test_article_summary_samples import generate_article_summary, extract_tags_from_summary
 from test_article_assessment_samples import generate_article_assessment
 from score_extractor import extract_assessment_scores
+from article_db_manager import ArticleDBManager
 
 class ArticleAnalyzer:
     """
@@ -13,6 +14,8 @@ class ArticleAnalyzer:
         """初始化文章分析器"""
         # 使用自定义模型服务
         self.custom_llm = create_custom_llm()
+        # 初始化数据库管理器
+        self.db_manager = ArticleDBManager()
     
     def analyze_article(self, article_path):
         """
@@ -66,8 +69,10 @@ class ArticleAnalyzer:
             }
         }
         
+        # 保存结果到数据库
+        self.db_manager.save_analysis_result(article_text, result)
+        
         return result
-
 
 # 示例使用
 if __name__ == "__main__":
@@ -75,7 +80,7 @@ if __name__ == "__main__":
     analyzer = ArticleAnalyzer()
     
     # 单篇文章分析示例
-    article_path = "/home/mao/workspace/medium_scrape/articles/1-bit-quantization-run-models-with-trillions-of-parameters-on-your-computer-442617a61440.txt"
+    article_path = "/home/mao/workspace/medium_scrape/articles/4-bit-quantization-with-gptq-36b0f4f02c34.txt"
     result = analyzer.analyze_article(article_path)
     
     # 打印分析结果
