@@ -3,7 +3,6 @@ from dialog_module.utils import read_article_from_file, create_custom_llm
 from test_article_summary_samples import generate_article_summary, extract_tags_from_summary
 from test_article_assessment_samples import generate_article_assessment
 from score_extractor import extract_assessment_scores
-import json
 
 class ArticleAnalyzer:
     """
@@ -68,40 +67,6 @@ class ArticleAnalyzer:
         }
         
         return result
-    
-    def analyze_multiple_articles(self, article_paths):
-        """
-        批量分析多篇文章
-        
-        参数:
-            article_paths: 文章文件路径列表
-            
-        返回:
-            包含所有文章分析结果的列表
-        """
-        results = []
-        for path in article_paths:
-            try:
-                result = self.analyze_article(path)
-                results.append(result)
-                print(f"已完成文章分析: {path}")
-            except Exception as e:
-                print(f"分析文章 {path} 时出错: {str(e)}")
-        
-        return results
-    
-    def save_results_to_json(self, results, output_path):
-        """
-        将分析结果保存为JSON文件
-        
-        参数:
-            results: 分析结果列表或字典
-            output_path: 输出文件路径
-        """
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(results, f, ensure_ascii=False, indent=2)
-        
-        print(f"分析结果已保存至: {output_path}")
 
 
 # 示例使用
@@ -126,15 +91,3 @@ if __name__ == "__main__":
     print("\n技术标签:", ", ".join(result['tags'].get('技术标签', [])))
     print("主题标签:", ", ".join(result['tags'].get('主题标签', [])))
     print("应用标签:", ", ".join(result['tags'].get('应用标签', [])))
-    
-    # 保存结果到JSON文件
-    analyzer.save_results_to_json(result, "article_analysis_result.json")
-    
-    # 批量分析示例
-    # article_paths = [
-    #     "/path/to/article1.txt",
-    #     "/path/to/article2.txt",
-    #     "/path/to/article3.txt"
-    # ]
-    # results = analyzer.analyze_multiple_articles(article_paths)
-    # analyzer.save_results_to_json(results, "multiple_articles_analysis.json")
