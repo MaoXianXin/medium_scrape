@@ -138,3 +138,37 @@ class ArticleDBManager:
         finally:
             if 'connection' in locals() and connection.open:
                 connection.close() 
+
+    def check_article_exists(self, article_text):
+        """
+        检查文章是否已存在于数据库中
+        
+        参数:
+            article_text: 文章原文
+            
+        返回:
+            如果文章存在返回记录ID，否则返回None
+        """
+        # 计算文章内容的哈希值
+        content_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
+        
+        try:
+            # 连接到MySQL数据库
+            connection = pymysql.connect(**self.db_config)
+            
+            with connection.cursor() as cursor:
+                # 检查是否已存在相同内容哈希的记录
+                check_sql = f"SELECT id FROM {self.table_name} WHERE article_content_hash = %s"
+                cursor.execute(check_sql, (content_hash,))
+                existing_record = cursor.fetchone()
+                
+                if existing_record:
+                    return existing_record['id']
+                return None
+                
+        except Exception as e:
+            print(f"检查文章存在性时发生错误: {e}")
+            return None
+        finally:
+            if 'connection' in locals() and connection.open:
+                connection.close() 

@@ -17,18 +17,26 @@ class ArticleAnalyzer:
         # 初始化数据库管理器
         self.db_manager = ArticleDBManager()
     
-    def analyze_article(self, article_path):
+    def analyze_article(self, article_path, force_reanalyze=False):
         """
         分析文章，收集价值评分和标签
         
         参数:
             article_path: 文章文件路径
+            force_reanalyze: 是否强制重新分析，即使文章已存在
             
         返回:
-            包含文章分析结果的字典
+            包含文章分析结果的字典，如果文章已存在且不强制重新分析则返回None
         """
         # 读取文章内容
         article_text = read_article_from_file(article_path)
+        
+        # 检查文章是否已存在于数据库中
+        if not force_reanalyze:
+            article_id = self.db_manager.check_article_exists(article_text)
+            if article_id:
+                print(f"文章已存在于数据库中(ID: {article_id})，跳过分析过程。")
+                return None
         
         # 生成文章总结
         summary = generate_article_summary(article_text, llm=self.custom_llm)
@@ -80,19 +88,26 @@ if __name__ == "__main__":
     analyzer = ArticleAnalyzer()
     
     # 单篇文章分析示例
-    article_path = "/home/mao/workspace/medium_scrape/articles/4-bit-quantization-with-gptq-36b0f4f02c34.txt"
-    result = analyzer.analyze_article(article_path)
+    article_path = "/home/mao/workspace/medium_scrape/articles/5-extremely-useful-plots-for-data-scientists-that-you-never-knew-existed-5b92498a878f.txt"
     
-    # 打印分析结果
-    print("\n文章分析结果:")
-    print("-" * 50)
-    print(f"文章路径: {result['article_path']}")
-    print(f"创新性得分: {result['scores']['innovation_score']}")
-    print(f"实用性得分: {result['scores']['practicality_score']}")
-    print(f"完整性得分: {result['scores']['completeness_score']}")
-    print(f"可信度得分: {result['scores']['credibility_score']}")
-    print(f"特定需求得分: {result['scores']['specific_needs_score']}")
-    print(f"最终总分: {result['scores']['total_score']}")
-    print("\n技术标签:", ", ".join(result['tags'].get('技术标签', [])))
-    print("主题标签:", ", ".join(result['tags'].get('主题标签', [])))
-    print("应用标签:", ", ".join(result['tags'].get('应用标签', [])))
+    # 可以通过参数控制是否强制重新分析
+    force_reanalyze = False  # 设置为True将强制重新分析
+    result = analyzer.analyze_article(article_path, force_reanalyze)
+    
+    # 如果文章已存在且不强制重新分析，result将为None
+    if result is None:
+        print("文章已存在，未进行重新分析。")
+    else:
+        # 打印分析结果
+        print("\n文章分析结果:")
+        print("-" * 50)
+        print(f"文章路径: {result['article_path']}")
+        print(f"创新性得分: {result['scores']['innovation_score']}")
+        print(f"实用性得分: {result['scores']['practicality_score']}")
+        print(f"完整性得分: {result['scores']['completeness_score']}")
+        print(f"可信度得分: {result['scores']['credibility_score']}")
+        print(f"特定需求得分: {result['scores']['specific_needs_score']}")
+        print(f"最终总分: {result['scores']['total_score']}")
+        print("\n技术标签:", ", ".join(result['tags'].get('技术标签', [])))
+        print("主题标签:", ", ".join(result['tags'].get('主题标签', [])))
+        print("应用标签:", ", ".join(result['tags'].get('应用标签', [])))
