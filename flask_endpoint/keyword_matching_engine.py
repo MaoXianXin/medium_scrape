@@ -31,11 +31,11 @@ def calculate_match_score(keyword, record):
             match_density = calculate_match_density(matched_tags, tags)
             
             # 计算字段匹配得分
-            # 1. 最佳匹配标签得分占70%
-            best_match_component = max_tag_score * 0.7
+            # 1. 最佳匹配标签得分占60%
+            best_match_component = max_tag_score * 0.6
             
-            # 2. 匹配密度占30%
-            density_component = match_density * 0.3
+            # 2. 匹配密度占40%
+            density_component = match_density * 0.4
             
             field_score = best_match_component + density_component
             
@@ -82,8 +82,8 @@ def calculate_tag_similarity(keyword, tag):
         return 0.8 * length_ratio
     
     # 部分词匹配
-    if ' ' in tag or '-' in tag or ',' in tag:
-        words = tag.replace('-', ' ').replace(',', ' ').split()
+    if ' ' in tag or '-' in tag:
+        words = tag.replace('-', ' ').split()
         for word in words:
             if keyword == word:
                 return 0.6
@@ -124,7 +124,7 @@ def normalize_by_tag_count(score, tag_count):
     """
     # 防止标签数量过多的字段获得不公平优势
     if tag_count > 5:
-        adjustment_factor = 1 - (tag_count - 5) * 0.01  # 每超过5个标签，减少1%的权重
+        adjustment_factor = 1 - (tag_count - 5) * 0.03  # 标签数量超过5个时，每多1个标签降低3%的权重
         adjustment_factor = max(0.7, adjustment_factor)  # 最低不低于0.7
         return score * adjustment_factor
     return score
