@@ -71,25 +71,29 @@ def calculate_tag_similarity(keyword, tag):
     """
     计算关键词与标签的相似度
     """
+    # 转换为小写进行比较，避免大小写敏感问题
+    keyword_lower = keyword.lower()
+    tag_lower = tag.lower()
+    
     # 精确匹配
-    if keyword == tag:
+    if keyword_lower == tag_lower:
         return 1.0
         
     # 包含匹配
-    if keyword in tag or tag in keyword:
+    if keyword_lower in tag_lower or tag_lower in keyword_lower:
         # 根据长度比例调整得分
         length_ratio = min(len(keyword), len(tag)) / max(len(keyword), len(tag))
         return 0.8 * length_ratio
     
     # 部分词匹配
-    if ' ' in tag or '-' in tag:
-        words = tag.replace('-', ' ').split()
+    if ' ' in tag_lower or '-' in tag_lower:
+        words = tag_lower.replace('-', ' ').split()
         for word in words:
-            if keyword == word:
+            if keyword_lower == word:
                 return 0.6
     
     # 简单的编辑距离相似度
-    similarity = calculate_similarity(keyword, tag)
+    similarity = calculate_similarity(keyword_lower, tag_lower)
     if similarity > 0.6:
         return similarity * 0.5
     
