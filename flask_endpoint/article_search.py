@@ -19,15 +19,18 @@ class ArticleSearchEngine:
         
     def search_articles_by_keyword(self, keyword, limit=10):
         """
-        根据关键词搜索文章，并按匹配分数排序返回文章标题
+        根据关键词搜索文章，并按匹配分数排序返回文章
         
         参数:
         keyword: 用户输入的关键词
         limit: 返回结果的最大数量，默认为10
         
         返回:
-        list: 包含(文章标题, 匹配分数)元组的列表，按分数降序排序
+        list: 包含(文章标题, 匹配分数, 文章ID)元组的列表，按分数降序排序
+              只返回匹配分数大于0的文章
+              如果查询过程中发生异常，则返回空列表
         """
+        connection = None
         try:
             # 连接数据库
             connection = pymysql.connect(**self.db_config)
@@ -69,8 +72,9 @@ class ArticleSearchEngine:
         article_id: 文章ID
         
         返回:
-        dict: 文章的详细信息
+        dict: 文章的详细信息，如果查询出错则返回None
         """
+        connection = None
         try:
             connection = pymysql.connect(**self.db_config)
             
