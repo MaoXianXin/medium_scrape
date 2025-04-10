@@ -398,3 +398,13 @@ neighbors-count-boosting-document-embeddings-with-contextual-encoding-bc31bf1dd3
 oasis-creating-worlds-in-real-time-with-ai-ca2abae28c94_complete_analysis.md	csdn	2025-04-09 16:31:39
 on-the-other-side-of-the-mirror-how-language-models-align-with-the-human-brain-f48184009434_complete_analysis.md	csdn	2025-04-09 16:33:09
 open-the-artificial-brain-sparse-autoencoders-for-llm-inspection-c845f2a3f786_complete_analysis.md	csdn	2025-04-09 16:34:34
+papers-explained-187c-llama-3-1-multimodal-experiments-a1940dd45575_complete_analysis.md	csdn	2025-04-10 16:36:23
+papers-explained-223-llm-compiler-15b1ddb9a1b0_complete_analysis.md	csdn	2025-04-10 16:37:48
+practical-prompt-engineering-74e96130abc4_complete_analysis.md	csdn	2025-04-10 16:39:13
+proactive-intelligent-automation-with-large-language-models-b3f4fc1fa77f_complete_analysis.md	csdn	2025-04-10 16:40:37
+proximal-policy-optimization-ppo-the-key-to-llm-alignment-923aa13143d4_complete_analysis.md	csdn	2025-04-10 16:42:02
+rag-fundamentals-first-c6f7acd4ed3b_complete_analysis.md	csdn	2025-04-10 16:48:09
+run-mixtral-8x7b-on-consumer-hardware-with-expert-offloading-bd3ada394688_complete_analysis.md	csdn	2025-04-10 16:49:34
+safekeep-sciences-future-can-llms-transform-peer-review-e1f323caef08_complete_analysis.md	csdn	2025-04-10 16:50:59
+serve-machine-learning-models-with-fastapi-e329ca3a89c6_complete_analysis.md	csdn	2025-04-10 16:52:23
+tabula-rasa-a-deep-dive-on-kolmogorov-arnold-networks-kans-f50958ca79b1_complete_analysis.md	csdn	2025-04-10 16:53:48
